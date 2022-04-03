@@ -80,6 +80,7 @@ class Tag(models.Model):
 #         value = self.value
 #         measurement_unit = self.ingredient.measurement_unit
 #         return f'{name} - {value} {measurement_unit}'
+
 # class Recipe(models.Model):
 #     # author =
 #     # ingredient = models.ManyToManyField()
