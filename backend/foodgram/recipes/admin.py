@@ -1,30 +1,22 @@
 from django.contrib import admin
+from .models import Ingredient, Tag
 
-from .models import Ingridient, IngridientQuantity
-from django.db.models import Sum
 
-class IngridientAdmin(admin.ModelAdmin):
+class IngredientAdmin(admin.ModelAdmin):
     list_display = (
-        'pk',
-        'name',
-        'measurement_unit',
-        'get_total_value'
+        'pk', 'name',
+        'measurement_unit'
     )
 
-    def get_total_value(self, obj):
-        q = obj.ingridient.all().aggregate(Sum('value'))
-        return q['value__sum']
-
-    get_total_value.short_description = 'Общее количество'
-
-# class IngridientQuantityAdmin(admin.ModelAdmin):
-#     list_display = (
-#         'pk',
-#         'ingridient',
-#         'value'
-#     )
 
 
-admin.site.register(Ingridient, IngridientAdmin)
-admin.site.register(IngridientQuantity)
-# admin.site.register(IngridientQuantity, IngridientQuantityAdmin)
+class TagAdmin(admin.ModelAdmin):
+    list_display = (
+        'pk', 'name',
+        'slug', 'color'
+    )
+    prepopulated_fields = {'slug': ('name',)}
+
+
+admin.site.register(Ingredient, IngredientAdmin)
+admin.site.register(Tag, TagAdmin)

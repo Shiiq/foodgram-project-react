@@ -1,76 +1,88 @@
-import re
-
 from django.db import models
-from django.core.validators import RegexValidator, MinValueValidator
+from django.core.validators import RegexValidator, MinValueValidator, MinLengthValidator
+from webcolors import CSS3_HEX_TO_NAMES
+
+COLORS = list(
+    (k, v.capitalize()) for k, v in CSS3_HEX_TO_NAMES.items()
+)
 
 
-class Ingridient(models.Model):
+class Ingredient(models.Model):
+    """Ингредиент:наименование и единица измерения"""
     name = models.CharField(
         max_length=50,
-        unique=True,
-        verbose_name='Ингридиент'
+        verbose_name='Ингредиент'
     )
     measurement_unit = models.CharField(
         max_length=50,
-        unique=True,
         verbose_name='Единица измерения'
     )
 
     class Meta:
         ordering = ['name']
-        verbose_name = 'Ингридиент'
-        verbose_name_plural = 'Ингридиенты'
+        verbose_name = 'Ингредиент'
+        verbose_name_plural = 'Ингредиенты'
 
     def __str__(self):
-        return f'{self.name}'
+        return f'{self.name}, {self.measurement_unit}'
 
 
-class IngridientQuantity(models.Model):
-    ingridient = models.ForeignKey(
-        Ingridient,
-        on_delete=models.CASCADE,
-        related_name='ingridient',
-        verbose_name='Ингридиент'
+class Tag(models.Model):
+    """
+    Тег.
+    При создании тега цвет выбирается из таблицы.
+    При записи в БД цвет конвертируется в hex-код.
+    """
+    name = models.CharField(
+        max_length=50,
+        unique=True,
+        verbose_name='Тег'
     )
-    value = models.PositiveIntegerField(
-        verbose_name='Количество',
-        validators=[MinValueValidator(1)],
+    slug = models.SlugField(
+        max_length=50,
+        unique=True
+    )
+    color = models.CharField(
+        max_length=7,
+        choices=COLORS,
+        validators=[
+            MinLengthValidator(4)
+        ]
     )
 
     class Meta:
-        verbose_name = 'Количество ингридиента'
-        verbose_name_plural = 'Количество ингридиентов'
+        ordering = ['name']
+        verbose_name = 'Тег'
+        verbose_name_plural = 'Теги'
 
     def __str__(self):
-        name = self.ingridient.name
-        value = self.value
-        measurement_unit = self.ingridient.measurement_unit
-        return f'{name} - {value} {measurement_unit}'
+        return self.name
 
 
-# class Tag(models.Model):
-#     name = models.CharField(
-#         max_length=50,
-#         unique=True,
-#         verbose_name='Тег'
+# class IngredientQuantity(models.Model):
+#     ingredient = models.ForeignKey(
+#         Ingredient,
+#         on_delete=models.CASCADE,
+#         related_name='ingredient',
+#         verbose_name='Ингредиент'
 #     )
-#     slug = models.SlugField(
-#         max_length=50,
-#         unique=True
+#     value = models.PositiveIntegerField(
+#         verbose_name='Количество',
+#         validators=[MinValueValidator(1)],
 #     )
-#     # color = models.CharField(
-#     #     max_length=7
-#     # )
 #
 #     class Meta:
-#         ordering = ['name']
-#         verbose_name = 'Тег'
-#         verbose_name_plural = 'Теги'
+#         verbose_name = 'Количество ингредиента'
+#         verbose_name_plural = 'Количество ингредиентов'
 #
-#
+#     def __str__(self):
+#         name = self.ingredient.name
+#         value = self.value
+#         measurement_unit = self.ingredient.measurement_unit
+#         return f'{name} - {value} {measurement_unit}'
 # class Recipe(models.Model):
 #     # author =
-#     # ingridient = models.ManyToManyField()
+#     # ingredient = models.ManyToManyField()
 #     # tag = models.ManyToManyField()
 #     image = models.ImageField(
 #         verbose_name='Картинка',
@@ -102,14 +114,14 @@ class IngridientQuantity(models.Model):
 #         related_name='tag'
 #     )
 #
-# class RecipeIngridient(models.Model):
+# class RecipeIngredient(models.Model):
 #     recipe = models.ForeignKey(
 #         Recipe,
 #         on_delete=models.CASCADE,
 #         related_name='recipe'
 #     )
-#     ingridient = models.ForeignKey(
-#         Ingridient,
+#     ingredient = models.ForeignKey(
+#         Ingredient,
 #         on_delete=models.CASCADE,
-#         related_name='ingridient'
+#         related_name='ingredient'
 #     )
