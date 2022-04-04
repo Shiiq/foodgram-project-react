@@ -10,7 +10,8 @@ djangorestframework-simplejwt==4.7.2
 pytz==2020.1
 sqlparse==0.3.1
 python-dotenv==0.19.0
-
+webcolors
+Pillow
 
 #pytest==6.2.4
 #pytest-django==4.4.0
