@@ -1,7 +1,7 @@
 from django.db import models
 from django.core.validators import RegexValidator, MinValueValidator, MinLengthValidator
 from webcolors import CSS3_HEX_TO_NAMES
-
+from .utils import get_upload_path
 from users.models import User
 
 COLORS = list(
@@ -84,7 +84,7 @@ class Recipe(models.Model):
     image = models.ImageField(
         blank=True,
         null=True,
-        upload_to='../media/',
+        upload_to=get_upload_path,
         verbose_name='Картинка'
     )
     name = models.CharField(
