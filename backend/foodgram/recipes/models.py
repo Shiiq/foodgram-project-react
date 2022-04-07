@@ -1,8 +1,9 @@
+from django.conf import settings
 from django.db import models
 from django.core.validators import RegexValidator, MinValueValidator, MinLengthValidator
 from webcolors import CSS3_HEX_TO_NAMES
 from .utils import get_upload_path
-from users.models import User
+
 
 COLORS = list(
     (k, v.capitalize()) for k, v in CSS3_HEX_TO_NAMES.items()
@@ -64,18 +65,18 @@ class Tag(models.Model):
 class Recipe(models.Model):
     """Рецепт."""
     author = models.ForeignKey(
-        User,
+        settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name='recipes',
         verbose_name='Автор рецепта'
     )
-    ingredient = models.ManyToManyField(
+    ingredients = models.ManyToManyField(
         Ingredient,
         through='RecipeIngredients',
         related_name='recipes',
         verbose_name='Ингредиент'
     )
-    tag = models.ManyToManyField(
+    tags = models.ManyToManyField(
         Tag,
         through='RecipeTags',
         related_name='recipes',
@@ -97,13 +98,23 @@ class Recipe(models.Model):
             MinValueValidator(1)
         ],
     )
-    description = models.TextField(
+    text = models.TextField(
         blank=True,
         null=True,
         max_length=250,
         verbose_name='Описание'
     )
-
+    # is_favorited = models.BooleanField(
+    #     blank=True,
+    #     null=True,
+    #     default=False
+    # )
+    #
+    # is_in_shopping_cart = models.BooleanField(
+    #     blank=True,
+    #     null=True,
+    #     default=False
+    # )
     class Meta:
         ordering = ['name']
         verbose_name = 'Рецепт'
@@ -177,4 +188,3 @@ class RecipeTags(models.Model):
 
     def __str__(self):
         return f'{self.recipe.name} #{self.tag.name}'
-

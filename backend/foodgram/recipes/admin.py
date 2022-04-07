@@ -22,8 +22,8 @@ class TagAdmin(admin.ModelAdmin):
 
 class RecipeAdmin(admin.ModelAdmin):
     list_display = (
-        'pk', 'name',
-        'author', 'cooking_time',
+        'pk', 'name', 'author',
+        'text', 'cooking_time',
         'ingredient_list', 'tag_list',
         'image_preview'
     )
@@ -32,12 +32,12 @@ class RecipeAdmin(admin.ModelAdmin):
 
     def ingredient_list(self, obj):
         return (', '.join([
-            ingredient.name for ingredient in obj.ingredient.all()
+            ingredient.name for ingredient in obj.ingredients.all()
         ]))
 
     def tag_list(self, obj):
         return (', '.join([
-            '#' + tag.name for tag in obj.tag.all()
+            '#' + tag.name for tag in obj.tags.all()
         ]))
 
     def image_preview(self, obj):
