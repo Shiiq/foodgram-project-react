@@ -12,16 +12,5 @@ router.register('recipes', RecipesViewSet)
 urlpatterns = [
     path('', include(router.urls)),
     path('auth/', include('djoser.urls')),
-    path('auth/', include('djoser.urls.jwt')),
+    path('auth/', include('djoser.urls.authtoken')),
 ]
-
-
-
-# api/users/
-# регистрация пользователя
-
-# # Djoser создаст набор необходимых эндпоинтов.
-# # базовые, для управления пользователями в Django:
-# path('auth/', include('djoser.urls')),
-# # JWT-эндпоинты, для управления JWT-токенами:
-# path('auth/', include('djoser.urls.jwt')),
