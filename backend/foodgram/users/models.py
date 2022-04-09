@@ -1,4 +1,5 @@
 from django.db import models
+from django.db.models import F, Q
 from django.contrib.auth.models import AbstractUser
 
 
@@ -29,3 +30,43 @@ class User(AbstractUser):
     REQUIRED_FIELDS has no effect in other parts of Django, like creating a user in the admin.
     """
     REQUIRED_FIELDS = ['username']
+
+    class Meta:
+        ordering = ['-id']
+        verbose_name = 'Пользователь'
+        verbose_name_plural = 'Пользователи'
+
+
+class Subscription(models.Model):
+    """Подписка."""
+    author = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='subscribers',
+        verbose_name='Автор'
+    )
+    subscriber = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='authors',
+        verbose_name='Подписчик'
+    )
+
+    class Meta:
+        ordering = ['-id']
+        verbose_name = 'Подписка'
+        verbose_name_plural = 'Подписки'
+        constraints = [
+            models.CheckConstraint(
+                check=~Q(subscriber=F('author')),
+                name='subscriber_not_equal_author'
+            ),
+            models.UniqueConstraint(
+                fields=['author', 'subscriber'],
+                name='unique_subscription')
+        ]
+
+    def __str__(self):
+        author = self.author.username
+        subscriber = self.subscriber.username
+        return f'{subscriber} подписан на {author}'

@@ -1,8 +1,9 @@
 from recipes.models import Ingredient, Tag, Recipe, RecipeIngredients, RecipeTags
-from rest_framework import viewsets
+from users.models import User, Subscription
+from django.shortcuts import get_object_or_404
+from rest_framework import filters, views, viewsets, status
 from .serializers import IngredientsSerializer, TagsSerializer, RecipesSerializer
 from .pagination import IngredientsPagination
-from rest_framework import filters
 
 
 class IngredientsViewSet(viewsets.ReadOnlyModelViewSet):
@@ -24,3 +25,29 @@ class RecipesViewSet(viewsets.ModelViewSet):
     serializer_class = RecipesSerializer
 
 
+# class MakeSubscriptionViewSet(CreateDeleteViewSet):
+#     queryset = Subscription.objects.all()
+#     serializer_class = MakeSubscriptionSerializer
+
+from rest_framework.response import Response
+
+
+class MakeSubscription(views.APIView):
+    """Обработка запросов на подписку/отписку."""
+    def post(self, request, id):
+        author = get_object_or_404(User, id=id)
+        Subscription.objects.create(
+            author=author,
+            subscriber=request.user
+        )
+        # serializer = TagsSerializer()
+        return Response(status=status.HTTP_201_CREATED)
+
+    def delete(self, request, id):
+        author = get_object_or_404(User, id=id)
+        Subscription.objects.filter(
+            author=author,
+            subscriber=request.user
+        ).delete()
+        # serializer = TagsSerializer()
+        return Response(status=status.HTTP_204_NO_CONTENT)

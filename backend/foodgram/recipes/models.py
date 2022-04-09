@@ -128,13 +128,13 @@ class RecipeIngredients(models.Model):
     recipe = models.ForeignKey(
         Recipe,
         on_delete=models.CASCADE,
-        related_name='RecipeIngredients',
+        related_name='recipe_ingredients',
         verbose_name='Рецепт'
     )
     ingredient = models.ForeignKey(
         Ingredient,
         on_delete=models.CASCADE,
-        related_name='RecipeIngredients',
+        related_name='recipe_ingredients',
         verbose_name='Ингредиент'
     )
     value = models.FloatField(
@@ -166,13 +166,13 @@ class RecipeTags(models.Model):
     recipe = models.ForeignKey(
         Recipe,
         on_delete=models.CASCADE,
-        related_name='RecipeTags',
+        related_name='recipe_tags',
         verbose_name='Рецепт'
     )
     tag = models.ForeignKey(
         Tag,
         on_delete=models.CASCADE,
-        related_name='RecipeTags',
+        related_name='recipe_tags',
         verbose_name='Тег'
     )
 

@@ -1,19 +1,29 @@
-from recipes.models import Ingredient, Tag, Recipe, RecipeIngredients, RecipeTags
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from djoser.serializers import UserSerializer, UserCreateSerializer
+from recipes.models import Ingredient, Tag, Recipe, RecipeIngredients, RecipeTags
+from users.models import Subscription
 
 User = get_user_model()
 
 
 class CustomUsersSerializer(UserSerializer):
     """Отображает информацию о пользователе."""
-    # is_subscribed
+    is_subscribed = serializers.SerializerMethodField()
+
+    def get_is_subscribed(self, obj):
+        request_user = self.context.get('request').user
+        return Subscription.objects.filter(
+            author=obj,
+            subscriber=request_user
+        ).exists()
+
     class Meta:
         model = User
         fields = (
             'email', 'id', 'username',
             'first_name', 'last_name',
+            'is_subscribed'
         )
 
 
@@ -26,7 +36,7 @@ class CustomUsersCreateSerializer(UserCreateSerializer):
         model = User
         fields = (
             'email', 'username', 'first_name',
-            'last_name', 'password'
+            'last_name', 'password',
         )
 
 
@@ -66,7 +76,7 @@ class IngredientDetailSerializer(serializers.ModelSerializer):
 class RecipesSerializer(serializers.ModelSerializer):
     """Обслуживает модель Recipe."""
     ingredients = IngredientDetailSerializer(
-        source="RecipeIngredients",
+        source='recipe_ingredients',
         many=True
     )
     author = CustomUsersSerializer(read_only=True)
@@ -85,3 +95,11 @@ class RecipesSerializer(serializers.ModelSerializer):
             'cooking_time', 'author'
         )
         depth = 1
+
+
+class ExpSerializer(serializers.ModelSerializer):
+    author = CustomUsersSerializer()
+
+    class Meta:
+        model = User
+        fields = ('email', 'id', 'username', 'first_name', 'last_name')
