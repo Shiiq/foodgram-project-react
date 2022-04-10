@@ -1,2 +1,0 @@
-import webcolors
-from rest_framework import serializers

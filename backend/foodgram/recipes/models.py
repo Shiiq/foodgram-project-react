@@ -104,17 +104,7 @@ class Recipe(models.Model):
         max_length=250,
         verbose_name='Описание'
     )
-    # is_favorited = models.BooleanField(
-    #     blank=True,
-    #     null=True,
-    #     default=False
-    # )
-    #
-    # is_in_shopping_cart = models.BooleanField(
-    #     blank=True,
-    #     null=True,
-    #     default=False
-    # )
+
     class Meta:
         ordering = ['name']
         verbose_name = 'Рецепт'
@@ -125,6 +115,7 @@ class Recipe(models.Model):
 
 
 class RecipeIngredients(models.Model):
+    """Связка рецепт-ингредиент-количество."""
     recipe = models.ForeignKey(
         Recipe,
         on_delete=models.CASCADE,
@@ -163,6 +154,7 @@ class RecipeIngredients(models.Model):
 
 
 class RecipeTags(models.Model):
+    """Связка рецепт-тег."""
     recipe = models.ForeignKey(
         Recipe,
         on_delete=models.CASCADE,
@@ -188,3 +180,4 @@ class RecipeTags(models.Model):
 
     def __str__(self):
         return f'{self.recipe.name} #{self.tag.name}'
+

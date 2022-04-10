@@ -2,6 +2,8 @@ from django.db import models
 from django.db.models import F, Q
 from django.contrib.auth.models import AbstractUser
 
+from recipes.models import Recipe
+
 
 class User(AbstractUser):
     """Пользовательская модель юзера с переопределенными полями."""
@@ -70,3 +72,34 @@ class Subscription(models.Model):
         author = self.author.username
         subscriber = self.subscriber.username
         return f'{subscriber} подписан на {author}'
+
+
+class RecipeFavorite(models.Model):
+    """Избранные рецепты. Связка рецепт-пользователь."""
+    recipe = models.ForeignKey(
+        Recipe,
+        on_delete=models.CASCADE,
+        related_name='recipe_favorite',
+        verbose_name='Рецепт'
+    )
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='recipe_favorite',
+        verbose_name='Автор'
+    )
+
+    class Meta:
+        ordering = ['id']
+        verbose_name = 'Избранный рецепт'
+        verbose_name_plural = 'Избранные рецепты'
+        constraints = [
+            models.UniqueConstraint(
+                fields=['recipe', 'user'],
+                name='unique_recipe_in_favorite')
+        ]
+
+    def __str__(self):
+        user = self.user.username
+        recipe = self.recipe.name
+        return f'{user} добавил "{recipe}" в избранное'

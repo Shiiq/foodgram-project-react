@@ -2,7 +2,7 @@ from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from djoser.serializers import UserSerializer, UserCreateSerializer
 from recipes.models import Ingredient, Tag, Recipe, RecipeIngredients, RecipeTags
-from users.models import Subscription
+from users.models import Subscription, RecipeFavorite
 
 User = get_user_model()
 
@@ -80,26 +80,45 @@ class RecipesSerializer(serializers.ModelSerializer):
         many=True
     )
     author = CustomUsersSerializer(read_only=True)
-    # print(Recipe.objects.get(pk=2).ingredient.first().name)
-    # print(Ingredient.objects.get(pk=2177).recipes.all())
-    # print(Recipe.objects.filter(ingredient__id=2177))
-    # print(Ingredient.objects.filter(recipes__name__startswith='Стейк'))
-    # for i in RecipeIngredients.objects.filter(recipe__in=Recipe.objects.all()):
-    #     print(i.ingredient, i.value)
-    # print(RecipeIngredients.objects.filter(recipe__in=Recipe.objects.all()).value.all())
+    is_favorited = serializers.SerializerMethodField()
+
+    def get_is_favorited(self, obj):
+        request_user = self.context.get('request').user
+        return RecipeFavorite.objects.filter(
+            recipe=obj,
+            user=request_user
+        ).exists()
+
     class Meta:
         model = Recipe
         fields = (
             'id', 'name', 'image', 'tags',
             'ingredients', 'text',
-            'cooking_time', 'author'
+            'cooking_time', 'author',
+            'is_favorited'
         )
         depth = 1
 
 
-class ExpSerializer(serializers.ModelSerializer):
-    author = CustomUsersSerializer()
+class RecipesDisplaySerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Recipe
+        fields = ('id', 'name', 'image', 'cooking_time')
+
+
+class SubscribeSerializer(CustomUsersSerializer):
+    recipes = RecipesDisplaySerializer(many=True)
+    recipes_count = serializers.SerializerMethodField()
+
+    def get_recipes_count(self, obj):
+        return obj.recipes.count()
 
     class Meta:
         model = User
-        fields = ('email', 'id', 'username', 'first_name', 'last_name')
+        fields = (
+            'email', 'id', 'username',
+            'first_name', 'last_name',
+            'is_subscribed', 'recipes',
+            'recipes_count'
+        )

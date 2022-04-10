@@ -1,13 +1,15 @@
-from rest_framework import filters, mixins, viewsets
+from rest_framework import filters, mixins, viewsets, permissions
+from rest_framework.pagination import LimitOffsetPagination
+from .pagination import CustomPagination
 
 
-class CreateDeleteViewSet(
-    mixins.ListModelMixin,
-    mixins.CreateModelMixin,
-    mixins.DestroyModelMixin,
-    viewsets.GenericViewSet
-):
-    """
-    Вьюсет для POST/DELETE запросов.
-    """
+class ReadOnlyViewSet(viewsets.ReadOnlyModelViewSet):
+    """Обработка запросов к ингрeдиентам"""
+    pagination_class = CustomPagination
+    permission_classes = (permissions.AllowAny, )
+    pass
+
+
+class ListViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
+    pagination_class = LimitOffsetPagination
     pass
