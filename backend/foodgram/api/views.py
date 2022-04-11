@@ -34,7 +34,7 @@ class RecipesViewSet(viewsets.ModelViewSet):
         return super().get_permissions()
 
     def get_serializer_class(self):
-        if self.action in ('post', 'patch'):
+        if self.action in ('create', 'partial_update'):
             return RecipesCreateSerializer
         return RecipesSerializer
 

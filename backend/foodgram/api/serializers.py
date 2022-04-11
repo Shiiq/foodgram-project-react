@@ -105,7 +105,7 @@ class RecipesSerializer(serializers.ModelSerializer):
 
 
 class RecipesDisplaySerializer(serializers.ModelSerializer):
-
+    """Используется как вложенный сериалайзер."""
     class Meta:
         model = Recipe
         fields = ('id', 'name', 'image', 'cooking_time')
@@ -128,31 +128,58 @@ class SubscribeSerializer(CustomUsersSerializer):
         )
 
 
-# class IngredientToWrite(serializers.ModelSerializer):
-#     id = serializers.IntegerField(source='ingredient.id')
+# class IngredientsToWrite(serializers.ModelSerializer):
+#     id = serializers.IntegerField(required=True, source='ingredient.id')
+#     value = serializers.FloatField(required=True)
 #
 #     class Meta:
 #         model = RecipeIngredients
 #         fields = ('id', 'value')
 
 
+class IngredientsToWrite(serializers.Serializer):
+    id = serializers.IntegerField(required=True)
+    value = serializers.FloatField(required=True)
+
+
 class RecipesCreateSerializer(serializers.ModelSerializer):
     """Для записи рецепта в БД."""
-    author = serializers.SlugRelatedField(
-        default=serializers.CurrentUserDefault(),
-        slug_field='username',
+    author = CustomUsersSerializer(
         read_only=True
     )
     tags = serializers.PrimaryKeyRelatedField(
         queryset=Tag.objects.all(),
         many=True
     )
-    # ingredients = serializers.
+    ingredients = IngredientsToWrite(
+        required=True,
+        many=True)
     # image =
+
+    def create(self, validated_data):
+        author = self.context.get('request').user
+        tags = validated_data.pop('tags')
+        ingredients = validated_data.pop('ingredients')
+        recipe = Recipe.objects.create(
+            **validated_data,
+            author=author
+        )
+        # for tag in tags:
+        #     recipe.tags.add(tag)
+        for ingredient in ingredients:
+            print(ingredient['id'])
+            RecipeIngredients.objects.create(
+                recipe=recipe,
+                ingredient__id=ingredient['id'],
+                value=ingredient['value']
+            )
+        # return recipe
+        # pass
+
 
     class Meta:
         model = Recipe
         fields = (
-            'author', 'name',
-            'tags', 'text'
+            'author', 'name', 'cooking_time',
+            'tags', 'text', 'ingredients'
         )
