@@ -1,8 +1,9 @@
 from django.shortcuts import get_object_or_404
-from rest_framework import filters, views, viewsets, status, response
+from rest_framework import filters, views, viewsets, status, response, permissions
 from django.db import IntegrityError
 
-from .serializers import IngredientsSerializer, TagsSerializer, RecipesSerializer, SubscribeSerializer, RecipesDisplaySerializer
+from .serializers import (IngredientsSerializer, TagsSerializer, RecipesSerializer,
+                          SubscribeSerializer, RecipesDisplaySerializer, RecipesCreateSerializer)
 from .viewsets import ReadOnlyViewSet, ListViewSet
 from recipes.models import Ingredient, Tag, Recipe, RecipeIngredients, RecipeTags
 from users.models import User, Subscription, RecipeFavorite
@@ -27,8 +28,18 @@ class RecipesViewSet(viewsets.ModelViewSet):
     queryset = Recipe.objects.all()
     serializer_class = RecipesSerializer
 
+    def get_permissions(self):
+        if self.action in ('list', 'retrieve'):
+            self.permission_classes = [permissions.AllowAny, ]
+        return super().get_permissions()
 
-class MakeSubscriptionView(views.APIView):
+    def get_serializer_class(self):
+        if self.action in ('post', 'patch'):
+            return RecipesCreateSerializer
+        return RecipesSerializer
+
+
+class MakeSubscription(views.APIView):
     """Обработка запросов на подписку/отписку."""
 
     def post(self, request, id):

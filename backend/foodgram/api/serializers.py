@@ -13,6 +13,8 @@ class CustomUsersSerializer(UserSerializer):
 
     def get_is_subscribed(self, obj):
         request_user = self.context.get('request').user
+        if request_user.is_anonymous:
+            return False
         return Subscription.objects.filter(
             author=obj,
             subscriber=request_user
@@ -84,6 +86,8 @@ class RecipesSerializer(serializers.ModelSerializer):
 
     def get_is_favorited(self, obj):
         request_user = self.context.get('request').user
+        if request_user.is_anonymous:
+            return False
         return RecipeFavorite.objects.filter(
             recipe=obj,
             user=request_user
@@ -121,4 +125,34 @@ class SubscribeSerializer(CustomUsersSerializer):
             'first_name', 'last_name',
             'is_subscribed', 'recipes',
             'recipes_count'
+        )
+
+
+# class IngredientToWrite(serializers.ModelSerializer):
+#     id = serializers.IntegerField(source='ingredient.id')
+#
+#     class Meta:
+#         model = RecipeIngredients
+#         fields = ('id', 'value')
+
+
+class RecipesCreateSerializer(serializers.ModelSerializer):
+    """Для записи рецепта в БД."""
+    author = serializers.SlugRelatedField(
+        default=serializers.CurrentUserDefault(),
+        slug_field='username',
+        read_only=True
+    )
+    tags = serializers.PrimaryKeyRelatedField(
+        queryset=Tag.objects.all(),
+        many=True
+    )
+    # ingredients = serializers.
+    # image =
+
+    class Meta:
+        model = Recipe
+        fields = (
+            'author', 'name',
+            'tags', 'text'
         )
