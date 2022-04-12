@@ -2,9 +2,10 @@ from django.shortcuts import get_object_or_404
 from rest_framework import filters, views, viewsets, status, response, permissions
 from django.db import IntegrityError
 
-from .serializers import (IngredientsSerializer, TagsSerializer, RecipesSerializer,
-                          SubscribeSerializer, RecipesDisplaySerializer, RecipesCreateSerializer)
 from .viewsets import ReadOnlyViewSet, ListViewSet
+from .serializers import RecipesSerializer, SubscribeSerializer, RecipesCreateSerializer
+from .simple_serializers import IngredientsSerializer, TagsSerializer, RecipesShortInfoSerializer
+
 from recipes.models import Ingredient, Tag, Recipe, RecipeIngredients, RecipeTags
 from users.models import User, Subscription, RecipeFavorite
 
@@ -51,7 +52,7 @@ class MakeSubscription(views.APIView):
             )
         except IntegrityError as error:
             return response.Response(
-                data={'errors': str(error.__cause__)},
+                data={'errors': str(error.__context__)},
                 status=status.HTTP_400_BAD_REQUEST
             )
         serializer = SubscribeSerializer(
@@ -102,10 +103,10 @@ class AddToFavorite(views.APIView):
             )
         except IntegrityError as error:
             return response.Response(
-                data={'errors': str(error.__cause__)},
+                data={'errors': str(error.__context__)},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        serializer = RecipesDisplaySerializer(
+        serializer = RecipesShortInfoSerializer(
                 recipe,
                 context={'request': request}
         )
