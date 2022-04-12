@@ -9,8 +9,4 @@ def get_upload_path(instance, filename):
         (instance.id, instance.name),
         allow_unicode=True
     )
-    return os.path.join(
-        'recipes',
-        dirname,
-        filename
-    )
+    return os.path.join('recipes', dirname, filename)

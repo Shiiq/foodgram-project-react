@@ -3,7 +3,7 @@ from django.contrib.auth import get_user_model
 from djoser.serializers import UserSerializer, UserCreateSerializer
 
 from .simple_serializers import IngredientDetailSerializer, RecipesShortInfoSerializer
-from recipes.models import Ingredient, Tag, Recipe, RecipeIngredients, RecipeTags, RecipeFavorite
+from recipes.models import Ingredient, Tag, Recipe, RecipeIngredients, RecipeTags, RecipeFavorite, ShoppingCart
 from users.models import Subscription
 
 User = get_user_model()
@@ -39,7 +39,7 @@ class CustomUsersCreateSerializer(UserCreateSerializer):
         model = User
         fields = (
             'email', 'username', 'first_name',
-            'last_name', 'password',
+            'last_name', 'password'
         )
 
 
@@ -60,13 +60,21 @@ class RecipesSerializer(serializers.ModelSerializer):
             recipe=obj, user=request_user
         ).exists()
 
+    def get_is_in_shopping_cart(self, obj):
+        request_user = self.context.get('request').user
+        if request_user.is_anonymous:
+            return False
+        return ShoppingCart.objects.filter(
+            recipe=obj, user=request_user
+        ).exists()
+
     class Meta:
         model = Recipe
         fields = (
             'id', 'name', 'image', 'tags',
             'ingredients', 'text',
             'cooking_time', 'author',
-            'is_favorited'
+            'is_favorited', 'is_in_shopping_cart'
         )
         depth = 1
 
