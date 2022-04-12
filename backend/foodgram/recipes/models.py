@@ -128,7 +128,7 @@ class RecipeIngredients(models.Model):
         related_name='recipe_ingredients',
         verbose_name='Ингредиент'
     )
-    value = models.FloatField(
+    amount = models.FloatField(
         verbose_name='Количество',
         validators=[
             MinValueValidator(0)
@@ -142,7 +142,7 @@ class RecipeIngredients(models.Model):
         constraints = [
             models.UniqueConstraint(
                 fields=['recipe', 'ingredient'],
-                name='unique_ingredient')
+                name='unique_ingredient_for_recipe')
         ]
 
     def __str__(self):
@@ -175,9 +175,68 @@ class RecipeTags(models.Model):
         constraints = [
             models.UniqueConstraint(
                 fields=['recipe', 'tag'],
-                name='unique_tag')
+                name='unique_tag_for_recipe')
         ]
 
     def __str__(self):
         return f'{self.recipe.name} #{self.tag.name}'
 
+
+class RecipeFavorite(models.Model):
+    """Избранные рецепты. Связка рецепт-пользователь."""
+    recipe = models.ForeignKey(
+        Recipe,
+        on_delete=models.CASCADE,
+        related_name='recipe_favorite',
+        verbose_name='Рецепт'
+    )
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='recipe_favorite',
+        verbose_name='Автор'
+    )
+
+    class Meta:
+        ordering = ['id']
+        verbose_name = 'Избранный рецепт'
+        verbose_name_plural = 'Избранные рецепты'
+        constraints = [
+            models.UniqueConstraint(
+                fields=['recipe', 'user'],
+                name='unique_recipe_in_favorite')
+        ]
+
+    def __str__(self):
+        user = self.user.username
+        recipe = self.recipe.name
+        return f'{user} добавил "{recipe}" в избранное'
+
+
+class ShoppingCart(models.Model):
+    """Рецепты для списка покупок. Связка рецепт-пользователь."""
+    recipe = models.ForeignKey(
+        Recipe,
+        on_delete=models.CASCADE,
+        related_name='in_shopping_cart',
+        verbose_name='Рецепт'
+    )
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='shopping_cart',
+        verbose_name='Автор'
+    )
+
+    class Meta:
+        ordering = ['user']
+        verbose_name = 'Корзина для покупок'
+        verbose_name_plural = 'Корзина для покупок'
+        constraints = [
+            models.UniqueConstraint(
+                fields=['recipe', 'user'],
+                name='unique_recipe_in_shopping_cart')
+        ]
+
+    def __str__(self):
+        return f'{self.user.username} добавил "{self.recipe}" в корзину.'

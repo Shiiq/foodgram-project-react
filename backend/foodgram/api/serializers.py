@@ -3,8 +3,8 @@ from django.contrib.auth import get_user_model
 from djoser.serializers import UserSerializer, UserCreateSerializer
 
 from .simple_serializers import IngredientDetailSerializer, RecipesShortInfoSerializer
-from recipes.models import Ingredient, Tag, Recipe, RecipeIngredients, RecipeTags
-from users.models import Subscription, RecipeFavorite
+from recipes.models import Ingredient, Tag, Recipe, RecipeIngredients, RecipeTags, RecipeFavorite
+from users.models import Subscription
 
 User = get_user_model()
 
@@ -18,8 +18,7 @@ class CustomUsersSerializer(UserSerializer):
         if request_user.is_anonymous:
             return False
         return Subscription.objects.filter(
-            author=obj,
-            subscriber=request_user
+            author=obj, subscriber=request_user
         ).exists()
 
     class Meta:
@@ -58,8 +57,7 @@ class RecipesSerializer(serializers.ModelSerializer):
         if request_user.is_anonymous:
             return False
         return RecipeFavorite.objects.filter(
-            recipe=obj,
-            user=request_user
+            recipe=obj, user=request_user
         ).exists()
 
     class Meta:
@@ -94,42 +92,32 @@ class SubscribeSerializer(CustomUsersSerializer):
 class IngredientsToWrite(serializers.ModelSerializer):
     """Используется для записи информации об ингредиентах при создании рецепта."""
     id = serializers.PrimaryKeyRelatedField(
-        queryset=Ingredient.objects.all(),
-        required=True
+        queryset=Ingredient.objects.all(), required=True
     )
-    value = serializers.FloatField(required=True)
+    amount = serializers.FloatField(required=True)
 
     class Meta:
         model = RecipeIngredients
-        fields = ('id', 'value')
+        fields = ('id', 'amount')
 
 
 class RecipesCreateSerializer(serializers.ModelSerializer):
     """Используется на запись и редактирование при создании рецепта."""
-    author = CustomUsersSerializer(
-        read_only=True
-    )
+    author = CustomUsersSerializer(read_only=True)
     tags = serializers.PrimaryKeyRelatedField(
-        queryset=Tag.objects.all(),
-        many=True
+        queryset=Tag.objects.all(), many=True
     )
-    ingredients = IngredientsToWrite(
-        required=True,
-        many=True)
+    ingredients = IngredientsToWrite(required=True, many=True)
     # image =
 
     def to_representation(self, instance):
-        return RecipesSerializer(
-            instance, context=self.context
-        ).data
+        return RecipesSerializer(instance, context=self.context).data
 
     def create(self, validated_data):
         author = self.context.get('request').user
         tags = validated_data.pop('tags')
         ingredients = validated_data.pop('ingredients')
-        recipe = Recipe.objects.create(
-            author=author, **validated_data
-        )
+        recipe = Recipe.objects.create(author=author, **validated_data)
 
         for tag in tags:
             recipe.tags.add(tag)
@@ -138,35 +126,31 @@ class RecipesCreateSerializer(serializers.ModelSerializer):
             RecipeIngredients.objects.create(
                 recipe=recipe,
                 ingredient=ingredient['id'],
-                value=ingredient['value']
+                value=ingredient['amount']
             )
 
         return recipe
 
     def update(self, instance, validated_data):
-        author = self.context.get('request').user
         tags = validated_data.pop('tags')
         ingredients = validated_data.pop('ingredients')
         instance.name = validated_data.get('name', instance.name)
         instance.text = validated_data.get('text', instance.text)
         instance.cooking_time = validated_data.get('cooking_time', instance.cooking_time)
         instance.save()
-        instance.tags.remove()
+
         for tag in tags:
             instance.tags.add(tag)
 
-        # for ingredient in ingredients:
-        #     RecipeIngredients.objects.update_or_create(
-        #         recipe=instance,
-        #         ingredient=ingredient['id'],
-        #         value=ingredient['value']
-        #     )
-            # RecipeIngredients.objects.create(
-            #     recipe=instance,
-            #     ingredient=ingredient['id'],
-            #     value=ingredient['value']
-            # )
-        # return instance
+        instance.recipe_ingredients.all().delete()
+        for ingredient in ingredients:
+            RecipeIngredients.objects.create(
+                recipe=instance,
+                ingredient=ingredient['id'],
+                value=ingredient['amount']
+            )
+
+        return instance
 
     class Meta:
         model = Recipe

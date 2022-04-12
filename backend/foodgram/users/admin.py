@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from .models import User, Subscription, RecipeFavorite
+from .models import User, Subscription
 
 
 # class SubscribeAdmin(admin.ModelAdmin):
@@ -11,4 +11,3 @@ from .models import User, Subscription, RecipeFavorite
 
 admin.site.register(User, UserAdmin)
 admin.site.register(Subscription)
-admin.site.register(RecipeFavorite)

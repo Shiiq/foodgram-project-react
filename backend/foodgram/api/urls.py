@@ -1,9 +1,8 @@
 from django.urls import include, path
 from rest_framework import routers
 
-from .views import (IngredientsViewSet, TagsViewSet,
-                    RecipesViewSet, MakeSubscription,
-                    ShowSubscriptionViewSet, AddToFavorite)
+from .views import (IngredientsViewSet, TagsViewSet, RecipesViewSet, MakeSubscription,
+                    ShowSubscriptionViewSet, AddToFavorite, AddToShoppingCart)
 
 router = routers.DefaultRouter()
 router.register(r'ingredients', IngredientsViewSet)
@@ -17,5 +16,5 @@ urlpatterns = [
     path('auth/', include('djoser.urls.authtoken')),
     path('users/<int:id>/subscribe/', MakeSubscription.as_view()),
     path('recipes/<int:id>/favorite/', AddToFavorite.as_view()),
-    # path('recipes/<int:id>/shopping_cart/') (get-скачать, post-добавить, del-удалить)
+    path('recipes/<int:id>/shopping_cart/', AddToShoppingCart.as_view()),
 ]

@@ -1,6 +1,8 @@
 from django.contrib import admin
-from .models import Ingredient, Tag, Recipe, RecipeIngredients, RecipeTags
 from django.utils.safestring import mark_safe
+
+from .models import (Ingredient, Tag, Recipe, RecipeIngredients,
+                     RecipeTags, RecipeFavorite, ShoppingCart)
 
 
 class IngredientAdmin(admin.ModelAdmin):
@@ -59,3 +61,5 @@ admin.site.register(Tag, TagAdmin)
 admin.site.register(Recipe, RecipeAdmin)
 admin.site.register(RecipeIngredients)
 admin.site.register(RecipeTags)
+admin.site.register(RecipeFavorite)
+admin.site.register(ShoppingCart)
