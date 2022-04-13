@@ -1,6 +1,5 @@
-from rest_framework import filters, mixins, viewsets, permissions
+from rest_framework import mixins, viewsets, permissions
 from rest_framework.pagination import LimitOffsetPagination
-from .pagination import CustomPagination
 
 
 class ReadOnlyViewSet(viewsets.ReadOnlyModelViewSet):
