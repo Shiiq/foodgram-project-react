@@ -5,7 +5,6 @@ from .pagination import CustomPagination
 
 class ReadOnlyViewSet(viewsets.ReadOnlyModelViewSet):
     """Обработка запросов к ингрeдиентам"""
-    pagination_class = CustomPagination
     permission_classes = (permissions.AllowAny, )
     pass
 

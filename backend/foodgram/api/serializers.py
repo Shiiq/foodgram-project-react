@@ -83,10 +83,7 @@ class RecipesSerializer(serializers.ModelSerializer):
 class SubscribeSerializer(CustomUsersSerializer):
     """Выводит список авторов, на которых подписан пользователь."""
     recipes = RecipesShortInfoSerializer(many=True)
-    recipes_count = serializers.SerializerMethodField()
-
-    def get_recipes_count(self, obj):
-        return obj.recipes.count()
+    recipes_count = serializers.IntegerField()
 
     class Meta:
         model = User
@@ -150,6 +147,7 @@ class RecipesCreateSerializer(serializers.ModelSerializer):
         )
         instance.save()
 
+        instance.tags.all().delete()
         for tag in tags:
             instance.tags.add(tag)
 

@@ -1,10 +1,14 @@
 from django.shortcuts import get_object_or_404
-from rest_framework import filters, views, viewsets, status, response, permissions
 from django.db import IntegrityError
+from django.db.models import Count
+from django.http import FileResponse
+from rest_framework import filters, views, viewsets, status, response, permissions, pagination
 
+from .permissions import IsAuthorOrReadOnly
 from .viewsets import ReadOnlyViewSet, ListViewSet
 from .serializers import RecipesSerializer, SubscribeSerializer, RecipesCreateSerializer
 from .simple_serializers import IngredientsSerializer, TagsSerializer, RecipesShortInfoSerializer
+from .utils import get_header_message, get_total_list
 
 from recipes.models import Ingredient, Tag, Recipe, RecipeIngredients, RecipeTags, RecipeFavorite, ShoppingCart
 from users.models import User, Subscription
@@ -28,13 +32,17 @@ class RecipesViewSet(viewsets.ModelViewSet):
     """Обработка запросов к рецептам."""
     queryset = Recipe.objects.all()
     serializer_class = RecipesSerializer
+    pagination_class = pagination.LimitOffsetPagination
 
     def get_permissions(self):
         if self.action in ('list', 'retrieve'):
             self.permission_classes = [permissions.AllowAny, ]
+        elif self.action in ('partial_update', 'destroy'):
+            self.permission_classes = [IsAuthorOrReadOnly, ]
         return super().get_permissions()
 
     def get_serializer_class(self):
+        print(self.action)
         if self.action in ('create', 'partial_update'):
             return RecipesCreateSerializer
         return RecipesSerializer
@@ -78,7 +86,9 @@ class ShowSubscriptionViewSet(ListViewSet):
         request_user = self.request.user
         queryset = User.objects.filter(
             subscribers__subscriber=request_user
-        ).all()
+        ).annotate(
+            recipes_count=Count('recipes')
+        )
         return queryset
 
 
@@ -112,23 +122,12 @@ class AddToFavorite(views.APIView):
         ).delete()
         return response.Response(status=status.HTTP_204_NO_CONTENT)
 
-from django.http import FileResponse
+
 class AddToShoppingCart(views.APIView):
     """
     Обработка запросов на добавление/удаление
     рецепта в корзину покупок.
     """
-    # def get_shopping_cart_file(self, request):
-    #     user=request.user
-    #     return user
-    def get(self, request, id):
-        info = Tag.objects.values_list('id', 'name')
-        with open('info.txt', 'w', encoding='utf-8') as f:
-            for l in info:
-                f.write(f'{l}\n')
-        response = FileResponse(open('info.txt', 'rb'), as_attachment=True)
-        return response
-
     def post(self, request, id):
         recipe = get_object_or_404(Recipe, id=id)
         try:
@@ -154,3 +153,22 @@ class AddToShoppingCart(views.APIView):
         ).delete()
         return response.Response(status=status.HTTP_204_NO_CONTENT)
 
+
+class DownloadShoppingCart(views.APIView):
+    """Обработка запроса на скачивание списка покупок."""
+    def get(self, request):
+        user = request.user
+        carts = user.shopping_cart.select_related('recipe').all()
+        message = get_header_message(carts)
+        total_list = get_total_list(carts)
+
+        with open('total_list', 'w', encoding='utf-8') as f:
+            f.write(f'{message}\n\n')
+            for k, v in total_list.items():
+                for unit, amount in v.items():
+                    f.write(f'{k}: {amount} {unit}\n')
+
+        user.shopping_cart.all().delete()
+
+        response = FileResponse(open('total_list', 'rb'), as_attachment=True)
+        return response
