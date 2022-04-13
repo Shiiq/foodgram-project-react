@@ -87,7 +87,6 @@ class AddToFavorite(views.APIView):
     Обработка запросов на добавление/удаление
     рецепта в избранное.
     """
-
     def post(self, request, id):
         recipe = get_object_or_404(Recipe, id=id)
         try:
@@ -113,12 +112,22 @@ class AddToFavorite(views.APIView):
         ).delete()
         return response.Response(status=status.HTTP_204_NO_CONTENT)
 
-
+from django.http import FileResponse
 class AddToShoppingCart(views.APIView):
     """
     Обработка запросов на добавление/удаление
     рецепта в корзину покупок.
     """
+    # def get_shopping_cart_file(self, request):
+    #     user=request.user
+    #     return user
+    def get(self, request, id):
+        info = Tag.objects.values_list('id', 'name')
+        with open('info.txt', 'w', encoding='utf-8') as f:
+            for l in info:
+                f.write(f'{l}\n')
+        response = FileResponse(open('info.txt', 'rb'), as_attachment=True)
+        return response
 
     def post(self, request, id):
         recipe = get_object_or_404(Recipe, id=id)
@@ -144,3 +153,4 @@ class AddToShoppingCart(views.APIView):
             recipe=recipe, user=request.user
         ).delete()
         return response.Response(status=status.HTTP_204_NO_CONTENT)
+

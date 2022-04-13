@@ -51,6 +51,7 @@ class RecipesSerializer(serializers.ModelSerializer):
     )
     author = CustomUsersSerializer(read_only=True)
     is_favorited = serializers.SerializerMethodField()
+    is_in_shopping_cart = serializers.SerializerMethodField()
 
     def get_is_favorited(self, obj):
         request_user = self.context.get('request').user
@@ -144,7 +145,9 @@ class RecipesCreateSerializer(serializers.ModelSerializer):
         ingredients = validated_data.pop('ingredients')
         instance.name = validated_data.get('name', instance.name)
         instance.text = validated_data.get('text', instance.text)
-        instance.cooking_time = validated_data.get('cooking_time', instance.cooking_time)
+        instance.cooking_time = validated_data.get(
+            'cooking_time', instance.cooking_time
+        )
         instance.save()
 
         for tag in tags:
