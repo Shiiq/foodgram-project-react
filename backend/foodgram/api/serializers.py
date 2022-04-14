@@ -167,3 +167,15 @@ class RecipesCreateSerializer(serializers.ModelSerializer):
             'author', 'name', 'cooking_time',
             'tags', 'text', 'ingredients'
         )
+
+
+import base64
+
+class Base64toImageFile(serializers.Field):
+
+    def to_representation(self, value):
+        return value
+
+    def to_internal_value(self, data):
+        image = base64.b64decode(data)
+        return image

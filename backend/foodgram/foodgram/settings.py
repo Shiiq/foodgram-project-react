@@ -9,7 +9,7 @@ SECRET_KEY = '283*2mv$=67km=gnmdjwt=zjmeofe94x*yf+0a!@u+5r=kn+5d'
 
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 AUTH_USER_MODEL = 'users.User'
 
@@ -65,7 +65,7 @@ DATABASES = {
     },
     # 'default': {
     #     'ENGINE': os.getenv('DB_ENGINE'),
-    #     'NAME': os.getenv('DB_NAME'),
+    #     'NAME': os.getenv('POSTGRES_DB'),
     #     'USER': os.getenv('POSTGRES_USER'),
     #     'PASSWORD': os.getenv('POSTGRES_PASSWORD'),
     #     'HOST': os.getenv('DB_HOST'),
