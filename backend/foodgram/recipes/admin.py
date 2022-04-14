@@ -27,7 +27,7 @@ class RecipeAdmin(admin.ModelAdmin):
         'pk', 'name', 'author',
         'text', 'cooking_time',
         'ingredient_list', 'tag_list',
-        'image_preview'
+        'image_preview', 'image'
     )
     search_fields = ('name', 'author')
     readonly_fields = ('image_preview', )

@@ -2,8 +2,9 @@ from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from djoser.serializers import UserSerializer, UserCreateSerializer
 
-from .simple_serializers import IngredientDetailSerializer, RecipesShortInfoSerializer
-from recipes.models import Ingredient, Tag, Recipe, RecipeIngredients, RecipeTags, RecipeFavorite, ShoppingCart
+from .simple_serializers import IngredientDetailSerializer, RecipesShortInfoSerializer, Base64toImageFile
+from recipes.models import (Ingredient, Tag, Recipe, RecipeIngredients,
+                            RecipeTags, RecipeFavorite, ShoppingCart)
 from users.models import Subscription
 
 User = get_user_model()
@@ -18,7 +19,8 @@ class CustomUsersSerializer(UserSerializer):
         if request_user.is_anonymous:
             return False
         return Subscription.objects.filter(
-            author=obj, subscriber=request_user
+            author=obj,
+            subscriber=request_user
         ).exists()
 
     class Meta:
@@ -58,7 +60,8 @@ class RecipesSerializer(serializers.ModelSerializer):
         if request_user.is_anonymous:
             return False
         return RecipeFavorite.objects.filter(
-            recipe=obj, user=request_user
+            recipe=obj,
+            user=request_user
         ).exists()
 
     def get_is_in_shopping_cart(self, obj):
@@ -66,7 +69,8 @@ class RecipesSerializer(serializers.ModelSerializer):
         if request_user.is_anonymous:
             return False
         return ShoppingCart.objects.filter(
-            recipe=obj, user=request_user
+            recipe=obj,
+            user=request_user
         ).exists()
 
     class Meta:
@@ -80,25 +84,11 @@ class RecipesSerializer(serializers.ModelSerializer):
         depth = 1
 
 
-class SubscribeSerializer(CustomUsersSerializer):
-    """Выводит список авторов, на которых подписан пользователь."""
-    recipes = RecipesShortInfoSerializer(many=True)
-    recipes_count = serializers.IntegerField()
-
-    class Meta:
-        model = User
-        fields = (
-            'email', 'id', 'username',
-            'first_name', 'last_name',
-            'is_subscribed', 'recipes',
-            'recipes_count'
-        )
-
-
 class IngredientsToWrite(serializers.ModelSerializer):
     """Используется для записи информации об ингредиентах при создании рецепта."""
     id = serializers.PrimaryKeyRelatedField(
-        queryset=Ingredient.objects.all(), required=True
+        queryset=Ingredient.objects.all(),
+        required=True
     )
     amount = serializers.FloatField(required=True)
 
@@ -111,10 +101,14 @@ class RecipesCreateSerializer(serializers.ModelSerializer):
     """Используется на запись и редактирование при создании рецепта."""
     author = CustomUsersSerializer(read_only=True)
     tags = serializers.PrimaryKeyRelatedField(
-        queryset=Tag.objects.all(), many=True
+        queryset=Tag.objects.all(),
+        many=True
     )
-    ingredients = IngredientsToWrite(required=True, many=True)
-    # image =
+    ingredients = IngredientsToWrite(
+        required=True,
+        many=True
+    )
+    image = Base64toImageFile(required=True)
 
     def to_representation(self, instance):
         return RecipesSerializer(instance, context=self.context).data
@@ -132,7 +126,7 @@ class RecipesCreateSerializer(serializers.ModelSerializer):
             RecipeIngredients.objects.create(
                 recipe=recipe,
                 ingredient=ingredient['id'],
-                value=ingredient['amount']
+                amount=ingredient['amount']
             )
 
         return recipe
@@ -143,7 +137,8 @@ class RecipesCreateSerializer(serializers.ModelSerializer):
         instance.name = validated_data.get('name', instance.name)
         instance.text = validated_data.get('text', instance.text)
         instance.cooking_time = validated_data.get(
-            'cooking_time', instance.cooking_time
+            'cooking_time',
+            instance.cooking_time
         )
         instance.save()
 
@@ -165,17 +160,21 @@ class RecipesCreateSerializer(serializers.ModelSerializer):
         model = Recipe
         fields = (
             'author', 'name', 'cooking_time',
-            'tags', 'text', 'ingredients'
+            'tags', 'text', 'ingredients',
+            'image'
         )
 
 
-import base64
+class SubscribeSerializer(CustomUsersSerializer):
+    """Выводит список авторов, на которых подписан пользователь."""
+    recipes = RecipesShortInfoSerializer(many=True)
+    recipes_count = serializers.IntegerField()
 
-class Base64toImageFile(serializers.Field):
-
-    def to_representation(self, value):
-        return value
-
-    def to_internal_value(self, data):
-        image = base64.b64decode(data)
-        return image
+    class Meta:
+        model = User
+        fields = (
+            'email', 'id', 'username',
+            'first_name', 'last_name',
+            'is_subscribed', 'recipes',
+            'recipes_count'
+        )

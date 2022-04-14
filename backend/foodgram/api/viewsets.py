@@ -1,13 +1,12 @@
 from rest_framework import mixins, viewsets, permissions
 from rest_framework.pagination import LimitOffsetPagination
+from djoser.views import UserViewSet
 
-
-class ReadOnlyViewSet(viewsets.ReadOnlyModelViewSet):
-    """Обработка запросов к ингрeдиентам"""
-    permission_classes = (permissions.AllowAny, )
+class ListViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
+    pagination_class = LimitOffsetPagination
     pass
 
 
-class ListViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
+class CustomUserViewSet(UserViewSet):
     pagination_class = LimitOffsetPagination
     pass
