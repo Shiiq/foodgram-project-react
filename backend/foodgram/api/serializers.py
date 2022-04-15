@@ -167,8 +167,22 @@ class RecipesCreateSerializer(serializers.ModelSerializer):
 
 class SubscribeSerializer(CustomUsersSerializer):
     """Выводит список авторов, на которых подписан пользователь."""
-    recipes = RecipesShortInfoSerializer(many=True)
+    recipes = serializers.SerializerMethodField()
     recipes_count = serializers.IntegerField()
+
+    def get_recipes(self, obj):
+        request = self.context['request']
+        recipes_limit = request.query_params.get('recipes_limit')
+        recipes = Recipe.objects.all()
+
+        if recipes_limit is None:
+            return RecipesShortInfoSerializer(recipes, many=True).data
+        elif not recipes_limit.isnumeric():
+            raise serializers.ValidationError(
+                'Проверьте параметр recipes_limit!'
+            )
+        recipes = Recipe.objects.all()[:int(recipes_limit)]
+        return RecipesShortInfoSerializer(recipes, many=True).data
 
     class Meta:
         model = User

@@ -189,7 +189,7 @@ class RecipeFavorite(models.Model):
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name='recipe_favorite',
-        verbose_name='Автор'
+        verbose_name='Пользователь'
     )
 
     class Meta:
@@ -221,7 +221,7 @@ class ShoppingCart(models.Model):
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name='shopping_cart',
-        verbose_name='Автор'
+        verbose_name='Пользователь'
     )
 
     class Meta:

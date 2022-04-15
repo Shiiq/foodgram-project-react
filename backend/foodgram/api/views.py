@@ -10,7 +10,7 @@ from .permissions import IsAuthorOrReadOnly
 from .viewsets import ListViewSet
 from .serializers import RecipesSerializer, SubscribeSerializer, RecipesCreateSerializer
 from .simple_serializers import IngredientsSerializer, TagsSerializer, RecipesShortInfoSerializer
-from .utils import get_header_message, get_total_list
+from .utils import get_header_message, get_total_list, IsFavOrInShopCart
 from recipes.models import (Ingredient, Tag, Recipe, RecipeIngredients,
                             RecipeTags, RecipeFavorite, ShoppingCart)
 from users.models import User, Subscription
@@ -38,17 +38,42 @@ class RecipesViewSet(viewsets.ModelViewSet):
     filter_backends = (DjangoFilterBackend, )
     filterset_class = RecipeFilter
 
-    # РЕАЛИЗОВАТЬ ПОИСК ПО ИЗБРАННОМУ И СПИСКУ ПОКУПОК
-    # def get_queryset(self):
-    #     request_user = self.request.user
-    #     queryset = Recipe.objects.all()
-    #     is_favorited = self.request.query_params.get('is_favorited')
-    #     is_in_shopping_cart = self.request.query_params.get('is_in_shopping_cart')
-    #     if is_favorited == 1:
-    #         queryset = queryset.filter(color=color)
-    #     if is_in_shopping_cart == 1:
-    #         queryset = queryset.filter(color=color)
-    #     return queryset
+    def get_queryset(self):
+        user = self.request.user
+
+        if user.is_anonymous:
+            return Recipe.objects.all()
+
+        is_favorited = self.request.query_params.get('is_favorited')
+        is_fav = IsFavOrInShopCart(
+            is_favorited,
+            'is_favorited'
+        )
+        is_in_shopping_cart = self.request.query_params.get('is_in_shopping_cart')
+        in_shop_cart = IsFavOrInShopCart(
+            is_in_shopping_cart,
+            'is_in_shopping_cart'
+        )
+
+        if not (is_fav.check and in_shop_cart.check):
+            return Recipe.objects.all()
+
+        if is_fav.check and not in_shop_cart.check:
+            return Recipe.objects.filter(
+                recipe_favorite__user=user
+            ).all()
+
+        if not is_fav.check and in_shop_cart.check:
+            return Recipe.objects.filter(
+                recipe_favorite__user=user
+            ).all()
+
+        if is_fav and in_shop_cart:
+            return Recipe.objects.filter(
+                in_shopping_cart__user=user
+            ).filter(
+                recipe_favorite__user=user
+            ).all()
 
     def get_permissions(self):
         if self.action in ('list', 'retrieve'):
