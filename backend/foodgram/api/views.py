@@ -44,18 +44,18 @@ class RecipesViewSet(viewsets.ModelViewSet):
         if user.is_anonymous:
             return Recipe.objects.all()
 
-        is_favorited = self.request.query_params.get('is_favorited')
+        is_favorited = self.request.query_params.get('is_favorited', '0')
         is_fav = IsFavOrInShopCart(
             is_favorited,
             'is_favorited'
         )
-        is_in_shopping_cart = self.request.query_params.get('is_in_shopping_cart')
+        is_in_shopping_cart = self.request.query_params.get('is_in_shopping_cart', '0')
         in_shop_cart = IsFavOrInShopCart(
             is_in_shopping_cart,
             'is_in_shopping_cart'
         )
 
-        if not (is_fav.check and in_shop_cart.check):
+        if not is_fav.check and not in_shop_cart.check:
             return Recipe.objects.all()
 
         if is_fav.check and not in_shop_cart.check:
@@ -65,7 +65,7 @@ class RecipesViewSet(viewsets.ModelViewSet):
 
         if not is_fav.check and in_shop_cart.check:
             return Recipe.objects.filter(
-                recipe_favorite__user=user
+                in_shopping_cart__user=user
             ).all()
 
         if is_fav and in_shop_cart:

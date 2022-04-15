@@ -27,17 +27,16 @@ def get_total_list(queryset):
 class IsFavOrInShopCart:
 
     values = (0, 1)
-    # None, (0 or 1), other
+
     def __init__(self, value, name):
-        if value is None:
-            self.value = 0
-        elif int(value) not in self.values:
+        if int(value) not in self.values:
             raise ValidationError(
                 f'Параметр {name} может принимать значения 0 или 1!'
             )
         else:
-            self.value = value
+            self.value = int(value)
 
     @property
     def check(self):
+        """При значение True фильтр активен."""
         return True if self.value == 1 else False
