@@ -2,13 +2,21 @@ from rest_framework.serializers import ValidationError
 
 
 def get_header_message(queryset):
-    """Готовит заголовок для файла списка покупок."""
+    """
+    Готовит заголовок из перечня рецептов для списка покупок.
+    На вход поступает queryset экземпляров модели ShoppingCart.
+    """
 
     recipes_list = (", ".join([cart.recipe.name for cart in queryset]))
     return f'Вы добавили в корзину ингредиенты для: {recipes_list}.'
 
+
 def get_total_list(queryset):
-    """Формирует словарь списка покупок."""
+    """
+    Формирует список покупок.
+    На вход поступает queryset экземпляров модели ShoppingCart.
+    Структура списка - {'ингредиент': {'ед.изм.': 'количество'}.
+    """
 
     total_list = {}
     for cart in queryset:
@@ -25,13 +33,20 @@ def get_total_list(queryset):
 
 
 class IsFavOrInShopCart:
+    """
+    Вспомогательный класс для реализации фильтров
+    'is_favorited' и 'is_in_shopping_cart' со встроенной валидацией
+    значения параметра.
+    """
 
-    values = (0, 1)
-    # None, (0 or 1), other
+    values = {
+        '0': False,
+        '1': True
+    }
+
     def __init__(self, value, name):
-        if value is None:
-            self.value = 0
-        elif int(value) not in self.values:
+        self.name = name
+        if value not in self.values:
             raise ValidationError(
                 f'Параметр {name} может принимать значения 0 или 1!'
             )
@@ -40,4 +55,5 @@ class IsFavOrInShopCart:
 
     @property
     def check(self):
-        return True if self.value == 1 else False
+        """При значении True фильтр будет активен."""
+        return self.values[self.value]

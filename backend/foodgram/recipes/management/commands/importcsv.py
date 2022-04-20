@@ -8,17 +8,25 @@ from django.core.management.base import BaseCommand
 class Command(BaseCommand):
     """
     Импорт данных в БД
-    manage.py importcsv path/to/file.csv main_model m2m_model
+    manage.py importcsv path/to/file.csv model_name
     """
 
     help = 'Imports data from csv-file'
 
     def add_arguments(self, parser):
-        parser.add_argument('file_path', type=str, help='Define path to csv file')
-        parser.add_argument('model', type=str, help='Define model')
+        parser.add_argument(
+            'file_path',
+            type=str,
+            help='Define path to csv file'
+        )
+        parser.add_argument(
+            'model',
+            type=str,
+            help='Define model name'
+        )
 
     def handle(self, *args, **options):
-        file_path = options["file_path"]
+        file_path = options['file_path']
         model_cl = apps.get_model('recipes', model_name=options["model"])
         t1 = time.time()
 
@@ -33,6 +41,7 @@ class Command(BaseCommand):
 
         self.stdout.write(
             self.style.SUCCESS(
-                f'File successfully imported! The execution time was: {t2-t1}s!'
+                f'File successfully imported!'
+                f'The execution time was: {t2-t1}s!'
             )
         )

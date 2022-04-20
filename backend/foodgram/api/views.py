@@ -2,36 +2,43 @@ from django.db import IntegrityError
 from django.db.models import Count
 from django.http import FileResponse
 from django.shortcuts import get_object_or_404
-from rest_framework import filters, views, viewsets, status, response, permissions, pagination
 from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import (pagination, permissions, response, status, views,
+                            viewsets)
 
-from .filters import RecipeFilter
+from recipes.models import (Ingredient, Recipe, RecipeFavorite, ShoppingCart,
+                            Tag)
+from users.models import Subscription, User
+
+from .filters import IngredientSearchFilter, RecipeFilter
 from .permissions import IsAuthorOrReadOnly
-from .viewsets import ListViewSet
-from .serializers import RecipesSerializer, SubscribeSerializer, RecipesCreateSerializer
-from .simple_serializers import IngredientsSerializer, TagsSerializer, RecipesShortInfoSerializer
-from .utils import get_header_message, get_total_list, IsFavOrInShopCart
-from recipes.models import (Ingredient, Tag, Recipe, RecipeIngredients,
-                            RecipeTags, RecipeFavorite, ShoppingCart)
-from users.models import User, Subscription
+from .serializers import (RecipesCreateSerializer, RecipesSerializer,
+                          SubscribeSerializer)
+from .simple_serializers import (IngredientsSerializer,
+                                 RecipesShortInfoSerializer, TagsSerializer)
+from .utils import IsFavOrInShopCart, get_header_message, get_total_list
+from .viewsets import ListViewSet, RetrieveListModelViewSet
 
 
-class IngredientsViewSet(viewsets.ReadOnlyModelViewSet):
+class IngredientsViewSet(RetrieveListModelViewSet):
     """Обработка запросов к ингрeдиентам."""
+
     queryset = Ingredient.objects.all()
     serializer_class = IngredientsSerializer
-    filter_backends = (filters.SearchFilter, )
-    search_fields = ['^name', ]
+    filter_backends = (IngredientSearchFilter, )
+    search_fields = ('^name', )
 
 
-class TagsViewSet(viewsets.ReadOnlyModelViewSet):
+class TagsViewSet(RetrieveListModelViewSet):
     """Обработка запросов к тегам."""
+
     queryset = Tag.objects.all()
     serializer_class = TagsSerializer
 
 
 class RecipesViewSet(viewsets.ModelViewSet):
     """Обработка запросов к рецептам."""
+
     queryset = Recipe.objects.all()
     serializer_class = RecipesSerializer
     pagination_class = pagination.LimitOffsetPagination
@@ -44,18 +51,18 @@ class RecipesViewSet(viewsets.ModelViewSet):
         if user.is_anonymous:
             return Recipe.objects.all()
 
-        is_favorited = self.request.query_params.get('is_favorited')
+        fav_param = self.request.query_params.get('is_favorited', '0')
         is_fav = IsFavOrInShopCart(
-            is_favorited,
+            fav_param,
             'is_favorited'
         )
-        is_in_shopping_cart = self.request.query_params.get('is_in_shopping_cart')
+        cart_param = self.request.query_params.get('is_in_shopping_cart', '0')
         in_shop_cart = IsFavOrInShopCart(
-            is_in_shopping_cart,
+            cart_param,
             'is_in_shopping_cart'
         )
 
-        if not (is_fav.check and in_shop_cart.check):
+        if not is_fav.check and not in_shop_cart.check:
             return Recipe.objects.all()
 
         if is_fav.check and not in_shop_cart.check:
@@ -65,7 +72,7 @@ class RecipesViewSet(viewsets.ModelViewSet):
 
         if not is_fav.check and in_shop_cart.check:
             return Recipe.objects.filter(
-                recipe_favorite__user=user
+                in_shopping_cart__user=user
             ).all()
 
         if is_fav and in_shop_cart:
@@ -123,13 +130,14 @@ class MakeSubscription(views.APIView):
 
 class ShowSubscriptionViewSet(ListViewSet):
     """Отображает текущие подписки пользователя."""
+
     queryset = User.objects.all()
     serializer_class = SubscribeSerializer
 
     def get_queryset(self):
-        request_user = self.request.user
+        user = self.request.user
         return User.objects.filter(
-            subscribers__subscriber=request_user
+            subscribers__subscriber=user
         ).annotate(
             recipes_count=Count('recipes')
         )
@@ -140,6 +148,7 @@ class AddToFavorite(views.APIView):
     Обработка запросов на добавление/удаление
     рецепта в избранное.
     """
+
     def post(self, request, id):
         recipe = get_object_or_404(Recipe, id=id)
         try:
@@ -152,12 +161,10 @@ class AddToFavorite(views.APIView):
                 data={'errors': str(error.__context__)},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        serializer = RecipesShortInfoSerializer(
-            recipe,
-            context={'request': request}
-        )
+        serializer = RecipesShortInfoSerializer(recipe)
         return response.Response(
-            serializer.data, status=status.HTTP_201_CREATED
+            serializer.data,
+            status=status.HTTP_201_CREATED
         )
 
     def delete(self, request, id):
@@ -174,6 +181,7 @@ class AddToShoppingCart(views.APIView):
     Обработка запросов на добавление/удаление
     рецепта в корзину покупок.
     """
+
     def post(self, request, id):
         recipe = get_object_or_404(Recipe, id=id)
         try:
@@ -186,10 +194,7 @@ class AddToShoppingCart(views.APIView):
                 data={'errors': str(error.__context__)},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        serializer = RecipesShortInfoSerializer(
-            recipe,
-            context={'request': request}
-        )
+        serializer = RecipesShortInfoSerializer(recipe)
         return response.Response(
             serializer.data, status=status.HTTP_201_CREATED
         )
@@ -204,7 +209,11 @@ class AddToShoppingCart(views.APIView):
 
 
 class DownloadShoppingCart(views.APIView):
-    """Обработка запроса на скачивание списка покупок."""
+    """
+    Обработка запроса на скачивание списка покупок.
+    После обработки корзина очищается.
+    """
+
     def get(self, request):
         user = request.user
         queryset = user.shopping_cart.select_related('recipe').all()
