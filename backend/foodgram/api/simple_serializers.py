@@ -1,4 +1,5 @@
 import base64
+import time as t
 import re
 
 from django.conf import settings
@@ -66,23 +67,25 @@ class Base64toImageFile(serializers.Field):
     def to_internal_value(self, data):
         """
         Название изображения формируется
-        из названия рецепта в поступившем запросе.
+        из хеша временной метки и названия рецепта.
+        При PATCH запросе старое изображение удаляется.
         """
 
-        name = self.context['request'].data['name']
-        f_name = slugify(name, allow_unicode=True)
+        recipe_name = self.context['request'].data['name']
+        slugify_name = slugify(recipe_name, allow_unicode=True)
         to_compile = re.compile(self.pattern)
         parse = to_compile.search(data)
         f_dir = parse.group('f_dir')
         f_ext = parse.group('f_ext')
         byte_string = parse.group('byte_string')
 
+        f_name = f'{hash(t.time())}-{slugify_name}.{f_ext}'
         to_bytes = base64.b64decode(byte_string)
 
         with open(
-                f'{settings.MEDIA_ROOT}/recipes/{f_dir}/{f_name}.{f_ext}',
-                'wb'
+            f'{settings.MEDIA_ROOT}\\recipes\\{f_dir}\\{f_name}',
+            'wb'
         ) as im:
             im.write(to_bytes)
 
-        return f'{f_name}.{f_ext}'
+        return f'recipes/images/{f_name}'

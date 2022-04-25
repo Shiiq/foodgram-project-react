@@ -29,7 +29,7 @@ class Subscription(models.Model):
         related_name='subscribers',
         verbose_name='Автор'
     )
-    subscriber = models.ForeignKey(
+    user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
         related_name='authors',
@@ -42,16 +42,16 @@ class Subscription(models.Model):
         verbose_name_plural = 'Подписки'
         constraints = [
             models.CheckConstraint(
-                check=~Q(subscriber=F('author')),
-                name='subscriber_not_equal_author'
+                check=~Q(user=F('author')),
+                name='user_not_equal_author'
             ),
             models.UniqueConstraint(
-                fields=['author', 'subscriber'],
+                fields=['author', 'user'],
                 name='unique_subscription'
             )
         ]
 
     def __str__(self):
-        author = self.author.username
-        subscriber = self.subscriber.username
-        return f'{subscriber} подписан на {author}'
+        author = self.author
+        user = self.user
+        return f'{user} подписан на {author}'

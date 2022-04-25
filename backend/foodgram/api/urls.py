@@ -3,7 +3,7 @@ from rest_framework import routers
 
 from .views import (AddToFavorite, AddToShoppingCart, DownloadShoppingCart,
                     IngredientsViewSet, MakeSubscription, RecipesViewSet,
-                    ShowSubscriptionViewSet, TagsViewSet)
+                    ShowSubscriptionViewSet, TagsViewSet, AddToFavOrShopCartCommonView)
 
 router = routers.DefaultRouter()
 router.register(r'ingredients', IngredientsViewSet)
@@ -15,8 +15,15 @@ urlpatterns = [
     path('auth/', include('djoser.urls.authtoken')),
     path('users/<int:id>/subscribe/', MakeSubscription.as_view()),
     path('recipes/', include([
-        path('<int:id>/favorite/', AddToFavorite.as_view()),
-        path('<int:id>/shopping_cart/', AddToShoppingCart.as_view()),
+
+        path('<int:id>/favorite/', AddToFavOrShopCartCommonView.as_view(),
+             {'primary': {'model': 'RecipeFavorite', 'app': 'recipes'},
+              'secondary': {'model': 'Recipe', 'app': 'recipes'}}),
+
+        path('<int:id>/shopping_cart/', AddToFavOrShopCartCommonView.as_view(),
+             {'primary': {'model': 'ShoppingCart', 'app': 'recipes'},
+              'secondary': {'model': 'Recipe', 'app': 'recipes'}}),
+
         path('download_shopping_cart/', DownloadShoppingCart.as_view())
     ])),
     path('', include(router.urls)),

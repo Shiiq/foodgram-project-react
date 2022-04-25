@@ -3,7 +3,7 @@ from django.core.validators import (MaxLengthValidator, MinLengthValidator,
                                     MinValueValidator)
 from django.db import models
 from webcolors import CSS3_HEX_TO_NAMES
-
+# from .querysets import RecipeQuerySet, RecipeManager
 from .utils import get_upload_path
 
 COLORS = list(
@@ -99,11 +99,11 @@ class Recipe(models.Model):
         validators=[MinValueValidator(1)]
     )
     text = models.TextField(
-        blank=True,
-        null=True,
+        default='Введите текст',
         max_length=255,
         verbose_name='Описание'
     )
+    # objects = RecipeManager()
 
     class Meta:
         ordering = ['name']
@@ -147,10 +147,9 @@ class RecipeIngredients(models.Model):
 
     def __str__(self):
         recipe = self.recipe.name
-        ingredient = self.ingredient.name
+        ingredient = self.ingredient
         amount = self.amount
-        measurement_unit = self.ingredient.measurement_unit
-        return f'{recipe}: {ingredient}, {amount}{measurement_unit}'
+        return f'{recipe}: {ingredient}, {amount}'
 
 
 class RecipeTags(models.Model):
@@ -212,8 +211,8 @@ class RecipeFavorite(models.Model):
         ]
 
     def __str__(self):
-        user = self.user.username
-        recipe = self.recipe.name
+        user = self.user
+        recipe = self.recipe
         return f'{user} добавил "{recipe}" в избранное'
 
 
@@ -245,6 +244,6 @@ class ShoppingCart(models.Model):
         ]
 
     def __str__(self):
-        user = self.user.username
-        recipe = self.recipe.name
+        user = self.user
+        recipe = self.recipe
         return f'{user} добавил "{recipe}" в корзину'
