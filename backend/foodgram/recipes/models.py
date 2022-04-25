@@ -3,7 +3,7 @@ from django.core.validators import (MaxLengthValidator, MinLengthValidator,
                                     MinValueValidator)
 from django.db import models
 from webcolors import CSS3_HEX_TO_NAMES
-# from .querysets import RecipeQuerySet, RecipeManager
+from .querysets import RecipeManager
 from .utils import get_upload_path
 
 COLORS = list(
@@ -103,7 +103,7 @@ class Recipe(models.Model):
         max_length=255,
         verbose_name='Описание'
     )
-    # objects = RecipeManager()
+    objects = RecipeManager()
 
     class Meta:
         ordering = ['name']
@@ -146,7 +146,7 @@ class RecipeIngredients(models.Model):
         ]
 
     def __str__(self):
-        recipe = self.recipe.name
+        recipe = self.recipe
         ingredient = self.ingredient
         amount = self.amount
         return f'{recipe}: {ingredient}, {amount}'
@@ -180,7 +180,7 @@ class RecipeTags(models.Model):
         ]
 
     def __str__(self):
-        return f'{self.recipe.name} #{self.tag.name}'
+        return f'{self.recipe} #{self.tag}'
 
 
 class RecipeFavorite(models.Model):

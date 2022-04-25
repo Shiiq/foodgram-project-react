@@ -21,10 +21,7 @@ class CustomUsersSerializer(UserSerializer):
     def get_is_subscribed(self, obj):
         user = self.context.get('request').user
         if user.is_authenticated:
-            return Subscription.objects.filter(
-                author=obj,
-                user=user
-            ).exists()
+            return Subscription.objects.filter(author=obj, user=user).exists()
         return False
 
     class Meta:
@@ -183,6 +180,7 @@ class SubscribeSerializer(CustomUsersSerializer):
             raise serializers.ValidationError(
                 'Проверьте значение параметра recipes_limit!'
             )
+
         recipes = obj.recipes.all()[:int(recipes_limit)]
         return RecipesShortInfoSerializer(recipes, many=True).data
 

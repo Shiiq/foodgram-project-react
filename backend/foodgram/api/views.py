@@ -1,11 +1,11 @@
-import rest_framework.permissions
 from django.db import IntegrityError
-from django.db.models import Exists, Count, OuterRef, Q
+from django.db.models import Count, Q, Prefetch
 from django.apps import apps
 from django.http import FileResponse
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import pagination, response, status, views, viewsets
+from rest_framework import pagination, status, views, viewsets
+from rest_framework.response import Response
 
 from recipes.models import (Ingredient, Recipe, RecipeFavorite, ShoppingCart,
                             Tag)
@@ -64,6 +64,11 @@ class RecipesViewSet(viewsets.ModelViewSet):
         if in_shop_cart.check:
             active_filters.append(Q(in_shopping_cart__user=user))
 
+        # for i in Recipe.objects.is_favorite(user):
+        #     print(i.is_favorite, i.name)
+        # for i in Recipe.objects.is_in_shopping_cart(user):
+        #     print(i.is_in_shopping_cart, i.name)
+
         return self.queryset.filter(*active_filters)
 
     def get_serializer_class(self):
@@ -74,45 +79,46 @@ class RecipesViewSet(viewsets.ModelViewSet):
 
 class AddToFavOrShopCartCommonView(views.APIView):
     """
-    Общий APIView для обработки запросов на
-    добавление рецепта в избранное или корзину.
+    Общий APIView для обработки запросов
+    на добавление рецепта в избранное или корзину.
     """
 
     def post(self, request, id, primary, secondary):
-        primary = apps.get_model(primary['app'], primary['model'])  #модель связка
-        secondary = apps.get_model(secondary['app'], secondary['model']) #модель рецепт
-        secondary_unit = get_object_or_404(secondary, id=id) #конкретный рецепт
+        primary = apps.get_model(primary['app'], primary['model'])
+        secondary = apps.get_model(secondary['app'], secondary['model'])
+        recipe = get_object_or_404(secondary, id=id)
         # data = {k: v for k, v in zip([f.name for f in primary._meta.get_fields()[1:]], [secondary_unit, request.user])}
         try:
-            primary.objects.create(
-                recipe=secondary_unit,
-                user=request.user
-            )
+            primary.objects.create(recipe=recipe, user=request.user)
+
         except IntegrityError as error:
-            return response.Response(
+            return Response(
                 data={'errors': str(error.__context__)},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        serializer = RecipesShortInfoSerializer(secondary_unit)
-        return response.Response(
-            serializer.data,
-            status=status.HTTP_201_CREATED
-        )
+
+        serializer = RecipesShortInfoSerializer(recipe)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     def delete(self, request, id, primary, secondary):
-        primary = apps.get_model(primary['app'], primary['model'])  #модель связка
-        secondary = apps.get_model(secondary['app'], secondary['model']) #модель рецепт
-        secondary_unit = get_object_or_404(secondary, id=id) #конкретный рецепт
+        primary = apps.get_model(primary['app'], primary['model'])
+        secondary = apps.get_model(secondary['app'], secondary['model'])
+        recipe = get_object_or_404(secondary, id=id)
+
         try:
-            if not primary.objects.filter(recipe=secondary_unit, user=request.user).exists():
-                raise Exception('Этого рецепта нет в избранном/корзине.')
-            primary.objects.filter(
-                recipe=secondary_unit,
-                user=request.user
-            ).delete()
-            return response.Response(status=status.HTTP_204_NO_CONTENT)
+            if not primary.objects.filter(
+                    recipe=recipe,
+                    user=request.user
+            ).exists():
+                return Response(
+                    data={'errors': 'Такого рецепта нет в избранном или корзине.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            primary.objects.filter(recipe=recipe, user=request.user).delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+
         except Exception as error:
-            return response.Response(
+            return Response(
                 data={'errors': str(error)},
                 status=status.HTTP_400_BAD_REQUEST
             )
@@ -123,18 +129,18 @@ class MakeSubscription(views.APIView):
 
     def post(self, request, id):
         author = get_object_or_404(User, id=id)
+
         try:
-            Subscription.objects.create(
-                author=author,
-                user=request.user
-            )
+            Subscription.objects.create(author=author, user=request.user)
+
         except IntegrityError as error:
             return response.Response(
                 data={'errors': str(error.__context__)},
                 status=status.HTTP_400_BAD_REQUEST
             )
+
         serializer = SubscribeSerializer(
-            author,
+            User.objects.annotate(recipes_count=Count('recipes')).get(id=id),
             context={'request': request}
         )
         return response.Response(
@@ -144,16 +150,21 @@ class MakeSubscription(views.APIView):
 
     def delete(self, request, id):
         author = get_object_or_404(User, id=id)
+
         try:
             if not Subscription.objects.filter(author=author, user=request.user).exists():
-                raise Exception('Такой подписки не существует.')
+                return Response(
+                    data={f'errors': f'Вы не подписаны на {author}.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
             Subscription.objects.filter(
                 author=author,
                 user=request.user
             ).delete()
-            return response.Response(status=status.HTTP_204_NO_CONTENT)
+            return Response(status=status.HTTP_204_NO_CONTENT)
+
         except Exception as error:
-            return response.Response(
+            return Response(
                 data={'errors': str(error)},
                 status=status.HTTP_400_BAD_REQUEST
             )
@@ -174,81 +185,15 @@ class ShowSubscriptionViewSet(ListViewSet):
         )
 
 
-class AddToFavorite(views.APIView):
-    """
-    Обработка запросов на добавление/удаление
-    рецепта в избранное.
-    """
-
-    def post(self, request, id):
-        recipe = get_object_or_404(Recipe, id=id)
-        try:
-            RecipeFavorite.objects.create(
-                recipe=recipe,
-                user=request.user
-            )
-        except IntegrityError as error:
-            return response.Response(
-                data={'errors': str(error.__context__)},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        serializer = RecipesShortInfoSerializer(recipe)
-        return response.Response(
-            serializer.data,
-            status=status.HTTP_201_CREATED
-        )
-
-    def delete(self, request, id):
-        recipe = get_object_or_404(Recipe, id=id)
-        RecipeFavorite.objects.filter(
-            recipe=recipe,
-            user=request.user
-        ).delete()
-        return response.Response(status=status.HTTP_204_NO_CONTENT)
-
-
-class AddToShoppingCart(views.APIView):
-    """
-    Обработка запросов на добавление/удаление
-    рецепта в корзину покупок.
-    """
-
-    def post(self, request, id):
-        recipe = get_object_or_404(Recipe, id=id)
-        try:
-            ShoppingCart.objects.create(
-                recipe=recipe,
-                user=request.user
-            )
-        except IntegrityError as error:
-            return response.Response(
-                data={'errors': str(error.__context__)},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        serializer = RecipesShortInfoSerializer(recipe)
-        return response.Response(
-            serializer.data, status=status.HTTP_201_CREATED
-        )
-
-    def delete(self, request, id):
-        recipe = get_object_or_404(Recipe, id=id)
-        RecipeFavorite.objects.filter(
-            recipe=recipe,
-            user=request.user
-        ).delete()
-        return response.Response(status=status.HTTP_204_NO_CONTENT)
-
-
 class DownloadShoppingCart(views.APIView):
     """
     Обработка запроса на скачивание списка покупок.
     После обработки корзина очищается.
     """
-    permission_classes = [rest_framework.permissions.AllowAny, ]
+
     def get(self, request):
         user = request.user
         queryset = user.shopping_cart.select_related('recipe').all()
-        # queryset = ShoppingCart.objects.all()
         message = get_header_message(queryset)
         total_list = get_total_list(queryset)
 

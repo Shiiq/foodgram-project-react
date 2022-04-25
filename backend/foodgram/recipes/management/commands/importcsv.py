@@ -33,9 +33,12 @@ class Command(BaseCommand):
         with open(file_path, "r", encoding="utf-8") as csv_file:
             reader = csv.reader(csv_file, delimiter=',')
             header = next(reader)
+            instances = []
             for row in reader:
                 obj_dict = {key: value for key, value in zip(header, row)}
-                model_cl.objects.create(**obj_dict)
+                instances.append(model_cl(**obj_dict))
+
+            model_cl.objects.bulk_create(instances)
 
         t2 = time.time()
 
