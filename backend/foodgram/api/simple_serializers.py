@@ -1,11 +1,12 @@
 import base64
+import time as t
 import re
 
 from django.conf import settings
 from django.utils.text import slugify
 from rest_framework import serializers
 
-from recipes.models import Ingredient, Tag, Recipe, RecipeIngredients
+from recipes.models import Ingredient, Recipe, RecipeIngredients, Tag
 
 
 class IngredientsSerializer(serializers.ModelSerializer):
@@ -18,9 +19,16 @@ class IngredientsSerializer(serializers.ModelSerializer):
 
 class IngredientDetailSerializer(serializers.ModelSerializer):
     """Выводит детальную информацию по ингридиентам внутри рецепта."""
-    id = serializers.ReadOnlyField(source='ingredient.id')
-    ingredient = serializers.ReadOnlyField(source='ingredient.name')
-    measurement_unit = serializers.ReadOnlyField(source='ingredient.measurement_unit')
+
+    id = serializers.ReadOnlyField(
+        source='ingredient.id'
+    )
+    ingredient = serializers.ReadOnlyField(
+        source='ingredient.name'
+    )
+    measurement_unit = serializers.ReadOnlyField(
+        source='ingredient.measurement_unit'
+    )
 
     class Meta:
         model = RecipeIngredients
@@ -44,24 +52,40 @@ class RecipesShortInfoSerializer(serializers.ModelSerializer):
 
 
 class Base64toImageFile(serializers.Field):
-    """Обработка данных из поля image и сохранение изображения."""
+    """
+    Обработка данных из поля image с последующим
+    сохранением изображения в БД.
+    """
+
+    pattern = (
+        r'data:(?P<f_dir>\w+)\/(?P<f_ext>\w+);base64,(?P<byte_string>.+)'
+    )
 
     def to_representation(self, value):
         return value
 
     def to_internal_value(self, data):
-        name = self.context['request'].data['name']
-        pattern = r'data:(?P<type>\w+)\/(?P<extension>\w+);base64,(?P<byte_string>.+)'
-        to_compile = re.compile(pattern)
-        parse = to_compile.search(data)
+        """
+        Название изображения формируется
+        из хеша временной метки и названия рецепта.
+        При PATCH запросе старое изображение удаляется.
+        """
 
-        name = slugify(name, allow_unicode=True)
-        extension = parse.group('extension')
+        recipe_name = self.context['request'].data['name']
+        slugify_name = slugify(recipe_name, allow_unicode=True)
+        to_compile = re.compile(self.pattern)
+        parse = to_compile.search(data)
+        f_dir = parse.group('f_dir')
+        f_ext = parse.group('f_ext')
         byte_string = parse.group('byte_string')
 
+        f_name = f'{hash(t.time())}-{slugify_name}.{f_ext}'
         to_bytes = base64.b64decode(byte_string)
 
-        with open(f'{settings.MEDIA_ROOT}/{name}.{extension}', 'wb') as im:
+        with open(
+            f'{settings.MEDIA_ROOT}\\recipes\\{f_dir}\\{f_name}',
+            'wb'
+        ) as im:
             im.write(to_bytes)
 
-        return f'{name}.{extension}'
+        return f'recipes/images/{f_name}'

@@ -1,9 +1,10 @@
 from django.conf import settings
+from django.core.validators import (MaxLengthValidator, MinLengthValidator,
+                                    MinValueValidator)
 from django.db import models
-from django.core.validators import RegexValidator, MinValueValidator, MinLengthValidator
 from webcolors import CSS3_HEX_TO_NAMES
+# from .querysets import RecipeQuerySet, RecipeManager
 from .utils import get_upload_path
-
 
 COLORS = list(
     (k, v.capitalize()) for k, v in CSS3_HEX_TO_NAMES.items()
@@ -12,12 +13,13 @@ COLORS = list(
 
 class Ingredient(models.Model):
     """Ингредиент."""
+
     name = models.CharField(
-        max_length=50,
-        verbose_name='Наименование ингредиента'
+        max_length=255,
+        verbose_name='Ингредиент'
     )
     measurement_unit = models.CharField(
-        max_length=50,
+        max_length=255,
         verbose_name='Единица измерения'
     )
 
@@ -33,22 +35,24 @@ class Ingredient(models.Model):
 class Tag(models.Model):
     """
     Тег.
-    При создании тега цвет выбирается из таблицы.
+    При создании тега в админке цвет выбирается
+    из таблицы библиотеки webcolors.
     При записи в БД цвет конвертируется в hex-код.
     """
+
     name = models.CharField(
-        max_length=50,
+        max_length=255,
         unique=True,
         verbose_name='Название тега'
     )
     slug = models.SlugField(
-        max_length=50,
+        max_length=255,
         unique=True
     )
     color = models.CharField(
         max_length=7,
         choices=COLORS,
-        validators=[MinLengthValidator(4)]
+        validators=[MinLengthValidator(4), MaxLengthValidator(7)]
     )
 
     class Meta:
@@ -62,6 +66,7 @@ class Tag(models.Model):
 
 class Recipe(models.Model):
     """Рецепт."""
+
     author = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
@@ -86,7 +91,7 @@ class Recipe(models.Model):
         verbose_name='Картинка'
     )
     name = models.CharField(
-        max_length=50,
+        max_length=255,
         verbose_name='Название рецепта'
     )
     cooking_time = models.PositiveSmallIntegerField(
@@ -94,11 +99,11 @@ class Recipe(models.Model):
         validators=[MinValueValidator(1)]
     )
     text = models.TextField(
-        blank=True,
-        null=True,
-        max_length=250,
+        default='Введите текст',
+        max_length=255,
         verbose_name='Описание'
     )
+    # objects = RecipeManager()
 
     class Meta:
         ordering = ['name']
@@ -111,6 +116,7 @@ class Recipe(models.Model):
 
 class RecipeIngredients(models.Model):
     """Связка рецепт-ингредиент-количество."""
+
     recipe = models.ForeignKey(
         Recipe,
         on_delete=models.CASCADE,
@@ -141,14 +147,14 @@ class RecipeIngredients(models.Model):
 
     def __str__(self):
         recipe = self.recipe.name
-        ingredient = self.ingredient.name
+        ingredient = self.ingredient
         amount = self.amount
-        measurement_unit = self.ingredient.measurement_unit
-        return f'{recipe}: {ingredient}, {amount}{measurement_unit}'
+        return f'{recipe}: {ingredient}, {amount}'
 
 
 class RecipeTags(models.Model):
     """Связка рецепт-тег."""
+
     recipe = models.ForeignKey(
         Recipe,
         on_delete=models.CASCADE,
@@ -179,6 +185,7 @@ class RecipeTags(models.Model):
 
 class RecipeFavorite(models.Model):
     """Избранные рецепты. Связка рецепт-пользователь."""
+
     recipe = models.ForeignKey(
         Recipe,
         on_delete=models.CASCADE,
@@ -204,13 +211,14 @@ class RecipeFavorite(models.Model):
         ]
 
     def __str__(self):
-        user = self.user.username
-        recipe = self.recipe.name
+        user = self.user
+        recipe = self.recipe
         return f'{user} добавил "{recipe}" в избранное'
 
 
 class ShoppingCart(models.Model):
     """Рецепты для списка покупок. Связка рецепт-пользователь."""
+
     recipe = models.ForeignKey(
         Recipe,
         on_delete=models.CASCADE,
@@ -236,6 +244,6 @@ class ShoppingCart(models.Model):
         ]
 
     def __str__(self):
-        user = self.user.username
-        recipe = self.recipe.name
+        user = self.user
+        recipe = self.recipe
         return f'{user} добавил "{recipe}" в корзину'
