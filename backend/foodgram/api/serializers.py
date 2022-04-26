@@ -2,9 +2,8 @@ from django.contrib.auth import get_user_model
 from djoser.serializers import UserCreateSerializer, UserSerializer
 from rest_framework import serializers
 
+from recipes.models import Ingredient, Recipe, RecipeIngredients, Tag
 from recipes.utils import delete_recipe_image
-from recipes.models import (Ingredient, Recipe, RecipeFavorite,
-                            RecipeIngredients, ShoppingCart, Tag)
 from users.models import Subscription
 
 from .simple_serializers import (Base64toImageFile, IngredientDetailSerializer,
@@ -20,9 +19,8 @@ class CustomUsersSerializer(UserSerializer):
 
     def get_is_subscribed(self, obj):
         user = self.context.get('request').user
-        if user.is_authenticated:
-            return Subscription.objects.filter(author=obj, user=user).exists()
-        return False
+        return (False if not user.is_authenticated else
+                Subscription.objects.filter(author=obj, user=user).exists())
 
     class Meta:
         model = User
@@ -55,26 +53,8 @@ class RecipesSerializer(serializers.ModelSerializer):
         many=True
     )
     author = CustomUsersSerializer(read_only=True)
-    is_favorited = serializers.SerializerMethodField()
-    is_in_shopping_cart = serializers.SerializerMethodField()
-
-    def get_is_favorited(self, obj):
-        user = self.context.get('request').user
-        if user.is_authenticated:
-            return RecipeFavorite.objects.filter(
-                recipe=obj,
-                user=user
-            ).exists()
-        return False
-
-    def get_is_in_shopping_cart(self, obj):
-        user = self.context.get('request').user
-        if user.is_authenticated:
-            return ShoppingCart.objects.filter(
-                recipe=obj,
-                user=user
-            ).exists()
-        return False
+    is_favorited = serializers.BooleanField()
+    is_in_shopping_cart = serializers.BooleanField()
 
     class Meta:
         model = Recipe

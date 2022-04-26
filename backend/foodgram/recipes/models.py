@@ -3,6 +3,7 @@ from django.core.validators import (MaxLengthValidator, MinLengthValidator,
                                     MinValueValidator)
 from django.db import models
 from webcolors import CSS3_HEX_TO_NAMES
+
 from .querysets import RecipeManager
 from .utils import get_upload_path
 

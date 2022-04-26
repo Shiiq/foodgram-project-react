@@ -1,31 +1,44 @@
 from django.db import models
-from django.db.models import Exists, OuterRef, F, Q, Value
+from django.db.models import BooleanField, Exists, OuterRef, Q, Value
 
 from users.models import User
 
 
 class RecipeQuerySet(models.QuerySet):
-    def is_favorite(self, user):
-        if not isinstance(user, User) or not user.is_authenticated:
-            return self.annotate(if_favorite=F(False))
-        return self.annotate(is_favorite=Exists(self.filter(
-            Q(recipe_favorite__recipe=OuterRef('pk')) & Q(recipe_favorite__user=user)
-        )))
+    """Кастомный queryset для модели Recipe."""
 
-    def is_in_shopping_cart(self, user):
-        if not isinstance(user, User) or not user.is_authenticated:
-            return self.annotate(if_favorite=F(False))
-        return self.annotate(is_in_shopping_cart=Exists(self.filter(
-            Q(in_shopping_cart__recipe=OuterRef('pk')) & Q(in_shopping_cart__user=user)
-        )))
+    def annotated(self, user):
+        if not isinstance(user, User) or user is None or not user.is_authenticated:
+            return self.annotate(
+                is_favorited=Value(False, output_field=BooleanField()),
+                is_in_shopping_cart=Value(False, output_field=BooleanField())
+            )
+        return self.annotate(
+            is_favorited=Exists(
+                self.filter(Q(recipe_favorite__recipe=OuterRef('pk')) &
+                            Q(recipe_favorite__user=user))
+            ),
+            is_in_shopping_cart=Exists(
+                self.filter(Q(in_shopping_cart__recipe=OuterRef('pk')) &
+                            Q(in_shopping_cart__user=user))
+            )
+        )
 
 
 class RecipeManager(models.Manager):
+    """
+    Кастомный менеджер для queryset'а Recipe.
+    Метод annotated() принимает в качестве аргумента экземпляр юзера,
+    либо подставляет значение None при его отсутствии.
+    Дальнейшая проверка юзера проводится в самом RecipeQueryset.
+    """
+
     def get_queryset(self):
         return RecipeQuerySet(self.model, using=self._db)
 
-    def is_favorite(self, user):
-        return self.get_queryset().is_favorite(user)
+    # def get_queryset(self, user=None):
+    #     qs = super(RecipeManager, self).get_queryset()
+    #     return qs.annotated(user)
 
-    def is_in_shopping_cart(self, user):
-        return self.get_queryset().is_in_shopping_cart(user)
+    def annotated(self, user=None):
+        return self.get_queryset().annotated(user)

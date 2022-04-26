@@ -1,14 +1,13 @@
-from django.db import IntegrityError
-from django.db.models import Count, Q, Prefetch
 from django.apps import apps
+from django.db import IntegrityError
+from django.db.models import Count, Q
 from django.http import FileResponse
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import pagination, status, views, viewsets
 from rest_framework.response import Response
 
-from recipes.models import (Ingredient, Recipe, RecipeFavorite, ShoppingCart,
-                            Tag)
+from recipes.models import Ingredient, Recipe, Tag
 from users.models import Subscription, User
 
 from .filters import IngredientSearchFilter, RecipeFilter
@@ -40,7 +39,7 @@ class TagsViewSet(RetrieveListModelViewSet):
 class RecipesViewSet(viewsets.ModelViewSet):
     """Обработка запросов к рецептам."""
 
-    queryset = Recipe.objects.all()
+    queryset = Recipe.objects.annotated()
     serializer_class = RecipesSerializer
     permission_classes = (RecipePermission, )
     pagination_class = pagination.LimitOffsetPagination
@@ -64,12 +63,7 @@ class RecipesViewSet(viewsets.ModelViewSet):
         if in_shop_cart.check:
             active_filters.append(Q(in_shopping_cart__user=user))
 
-        # for i in Recipe.objects.is_favorite(user):
-        #     print(i.is_favorite, i.name)
-        # for i in Recipe.objects.is_in_shopping_cart(user):
-        #     print(i.is_in_shopping_cart, i.name)
-
-        return self.queryset.filter(*active_filters)
+        return self.queryset.annotated(user).filter(*active_filters)
 
     def get_serializer_class(self):
         if self.action in ('create', 'partial_update'):
@@ -87,7 +81,7 @@ class AddToFavOrShopCartCommonView(views.APIView):
         primary = apps.get_model(primary['app'], primary['model'])
         secondary = apps.get_model(secondary['app'], secondary['model'])
         recipe = get_object_or_404(secondary, id=id)
-        # data = {k: v for k, v in zip([f.name for f in primary._meta.get_fields()[1:]], [secondary_unit, request.user])}
+
         try:
             primary.objects.create(recipe=recipe, user=request.user)
 
@@ -111,7 +105,7 @@ class AddToFavOrShopCartCommonView(views.APIView):
                     user=request.user
             ).exists():
                 return Response(
-                    data={'errors': 'Такого рецепта нет в избранном или корзине.'},
+                    data={'errors': 'Этого рецепта нет в избранном/корзине.'},
                     status=status.HTTP_400_BAD_REQUEST
                 )
             primary.objects.filter(recipe=recipe, user=request.user).delete()
@@ -134,7 +128,7 @@ class MakeSubscription(views.APIView):
             Subscription.objects.create(author=author, user=request.user)
 
         except IntegrityError as error:
-            return response.Response(
+            return Response(
                 data={'errors': str(error.__context__)},
                 status=status.HTTP_400_BAD_REQUEST
             )
@@ -143,7 +137,7 @@ class MakeSubscription(views.APIView):
             User.objects.annotate(recipes_count=Count('recipes')).get(id=id),
             context={'request': request}
         )
-        return response.Response(
+        return Response(
             serializer.data,
             status=status.HTTP_201_CREATED
         )
@@ -152,9 +146,10 @@ class MakeSubscription(views.APIView):
         author = get_object_or_404(User, id=id)
 
         try:
-            if not Subscription.objects.filter(author=author, user=request.user).exists():
+            if not Subscription.objects.filter(
+                    author=author, user=request.user).exists():
                 return Response(
-                    data={f'errors': f'Вы не подписаны на {author}.'},
+                    data={'errors': f'Вы не подписаны на {author}.'},
                     status=status.HTTP_400_BAD_REQUEST
                 )
             Subscription.objects.filter(

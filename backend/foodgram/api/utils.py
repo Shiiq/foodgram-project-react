@@ -45,7 +45,7 @@ def get_total_list(queryset):
     """
 
     total_list = {}
-    # shopping_cart > recipe > recipe_ingredients.amount & recipe_ingredients.ingredient
+
     for cart in queryset:
         r_ingredients = cart.recipe.recipe_ingredients.all()
         for r_ingredient in r_ingredients:

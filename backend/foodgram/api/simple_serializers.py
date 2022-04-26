@@ -1,6 +1,6 @@
 import base64
-import time as t
 import re
+import time as t
 
 from django.conf import settings
 from django.utils.text import slugify
