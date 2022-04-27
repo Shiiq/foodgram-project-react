@@ -5,13 +5,12 @@ from rest_framework import serializers
 from recipes.models import Ingredient, Recipe, RecipeIngredients, Tag
 from recipes.utils import delete_recipe_image
 from users.models import Subscription
-
 from .simple_serializers import (Base64toImageFile, IngredientDetailSerializer,
                                  RecipesShortInfoSerializer)
 
 User = get_user_model()
 
-from django.db.models import Q
+
 class CustomUsersSerializer(UserSerializer):
     """Для вывода информации о пользователе."""
 

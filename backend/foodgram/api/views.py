@@ -1,6 +1,5 @@
-from django.apps import apps
 from django.db import IntegrityError
-from django.db.models import Count, Q
+from django.db.models import Count
 from django.http import FileResponse
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
@@ -9,7 +8,6 @@ from rest_framework.response import Response
 
 from recipes.models import Ingredient, Recipe, Tag, ShoppingCart
 from users.models import Subscription, User
-
 from .filters import IngredientSearchFilter, RecipeFilter
 from .permissions import RecipePermission
 from .serializers import (RecipesCreateSerializer, RecipesSerializer,
@@ -48,7 +46,7 @@ class RecipesViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        return self.queryset.annotated(user)
+        return self.queryset.annotated(user).all()
 
     def get_serializer_class(self):
         if self.action in ('create', 'partial_update'):
@@ -144,8 +142,8 @@ class ShowSubscriptionViewSet(ListViewSet):
             recipes_count=Count('recipes')
         )
 
+from io import StringIO
 from rest_framework.permissions import AllowAny
-
 class DownloadShoppingCart(views.APIView):
     """
     Обработка запроса на скачивание списка покупок.
@@ -160,11 +158,20 @@ class DownloadShoppingCart(views.APIView):
         message = get_header_message(queryset)
         total_list = get_total_list(queryset)
 
-        with open('total_list.txt', 'w', encoding='utf-8') as f:
-            f.write(f'{message}\n\n')
-            for k, v in total_list.items():
-                for unit, amount in v.items():
-                    f.write(f'{k}: {amount} {unit}\n')
+        f = StringIO()
+        f.name = 'shopping-list'
+        f.write(f'{message}\n\n')
+        for k, v in total_list.items():
+            for unit, amount in v.items():
+                f.write(f'{k}: {amount} {unit}\n')
+
+        f.seek(0)
+        return FileResponse(open(f.getvalue(), 'rb+'), as_attachment=True)
+        # with open('total_list.txt', 'w', encoding='utf-8') as f:
+        #     f.write(f'{message}\n\n')
+        #     for k, v in total_list.items():
+        #         for unit, amount in v.items():
+        #             f.write(f'{k}: {amount} {unit}\n')
 
         # user.shopping_cart.all().delete()
-        return FileResponse(('total_list.txt', 'rb'), as_attachment=True)
+        # return FileResponse(, as_attachment=True)
