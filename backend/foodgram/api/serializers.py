@@ -11,7 +11,7 @@ from .simple_serializers import (Base64toImageFile, IngredientDetailSerializer,
 
 User = get_user_model()
 
-
+from django.db.models import Q
 class CustomUsersSerializer(UserSerializer):
     """Для вывода информации о пользователе."""
 
@@ -19,8 +19,9 @@ class CustomUsersSerializer(UserSerializer):
 
     def get_is_subscribed(self, obj):
         user = self.context.get('request').user
-        return (False if not user.is_authenticated else
-                Subscription.objects.filter(author=obj, user=user).exists())
+        # return user.authors.filter(author=obj)
+        # return obj.subscribers.get(user=user).exists()
+        return Subscription.objects.filter(author=obj, user=user).exists()
 
     class Meta:
         model = User
@@ -53,8 +54,8 @@ class RecipesSerializer(serializers.ModelSerializer):
         many=True
     )
     author = CustomUsersSerializer(read_only=True)
-    is_favorited = serializers.BooleanField()
-    is_in_shopping_cart = serializers.BooleanField()
+    is_favorited = serializers.BooleanField(read_only=True)
+    is_in_shopping_cart = serializers.BooleanField(read_only=True)
 
     class Meta:
         model = Recipe

@@ -7,7 +7,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import pagination, status, views, viewsets
 from rest_framework.response import Response
 
-from recipes.models import Ingredient, Recipe, Tag
+from recipes.models import Ingredient, Recipe, Tag, ShoppingCart
 from users.models import Subscription, User
 
 from .filters import IngredientSearchFilter, RecipeFilter
@@ -16,7 +16,7 @@ from .serializers import (RecipesCreateSerializer, RecipesSerializer,
                           SubscribeSerializer)
 from .simple_serializers import (IngredientsSerializer,
                                  RecipesShortInfoSerializer, TagsSerializer)
-from .utils import IsFavOrInShopCart, get_header_message, get_total_list
+from .utils import get_header_message, get_total_list
 from .viewsets import ListViewSet, RetrieveListModelViewSet
 
 
@@ -48,22 +48,7 @@ class RecipesViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        if not user.is_authenticated:
-            return self.queryset
-
-        active_filters = []
-
-        fav_param = self.request.query_params.get('is_favorited', '0')
-        is_fav = IsFavOrInShopCart(fav_param, 'is_favorited')
-        if is_fav.check:
-            active_filters.append(Q(recipe_favorite__user=user))
-
-        cart_param = self.request.query_params.get('is_in_shopping_cart', '0')
-        in_shop_cart = IsFavOrInShopCart(cart_param, 'is_in_shopping_cart')
-        if in_shop_cart.check:
-            active_filters.append(Q(in_shopping_cart__user=user))
-
-        return self.queryset.annotated(user).filter(*active_filters)
+        return self.queryset.annotated(user)
 
     def get_serializer_class(self):
         if self.action in ('create', 'partial_update'):
@@ -78,16 +63,13 @@ class AddToFavOrShopCartCommonView(views.APIView):
     """
 
     def post(self, request, id, primary, secondary):
-        primary = apps.get_model(primary['app'], primary['model'])
-        secondary = apps.get_model(secondary['app'], secondary['model'])
         recipe = get_object_or_404(secondary, id=id)
 
         try:
             primary.objects.create(recipe=recipe, user=request.user)
-
-        except IntegrityError as error:
+        except IntegrityError as e:
             return Response(
-                data={'errors': str(error.__context__)},
+                data={'errors': str(e.__context__)},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
@@ -95,27 +77,17 @@ class AddToFavOrShopCartCommonView(views.APIView):
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     def delete(self, request, id, primary, secondary):
-        primary = apps.get_model(primary['app'], primary['model'])
-        secondary = apps.get_model(secondary['app'], secondary['model'])
         recipe = get_object_or_404(secondary, id=id)
 
         try:
-            if not primary.objects.filter(
-                    recipe=recipe,
-                    user=request.user
-            ).exists():
-                return Response(
-                    data={'errors': 'Этого рецепта нет в избранном/корзине.'},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-            primary.objects.filter(recipe=recipe, user=request.user).delete()
-            return Response(status=status.HTTP_204_NO_CONTENT)
-
-        except Exception as error:
+            primary.objects.get(recipe=recipe, user=request.user).delete()
+        except primary.DoesNotExist:
             return Response(
-                data={'errors': str(error)},
+                data={'errors': f'Такого нет в {primary._meta.verbose_name}'},
                 status=status.HTTP_400_BAD_REQUEST
             )
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class MakeSubscription(views.APIView):
@@ -126,10 +98,9 @@ class MakeSubscription(views.APIView):
 
         try:
             Subscription.objects.create(author=author, user=request.user)
-
-        except IntegrityError as error:
+        except IntegrityError as e:
             return Response(
-                data={'errors': str(error.__context__)},
+                data={'errors': str(e.__context__)},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
@@ -146,23 +117,17 @@ class MakeSubscription(views.APIView):
         author = get_object_or_404(User, id=id)
 
         try:
-            if not Subscription.objects.filter(
-                    author=author, user=request.user).exists():
-                return Response(
-                    data={'errors': f'Вы не подписаны на {author}.'},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-            Subscription.objects.filter(
+            Subscription.objects.get(
                 author=author,
                 user=request.user
             ).delete()
-            return Response(status=status.HTTP_204_NO_CONTENT)
-
-        except Exception as error:
+        except Subscription.DoesNotExist:
             return Response(
-                data={'errors': str(error)},
+                data={'errors': f'Вы не подписаны на {author}'},
                 status=status.HTTP_400_BAD_REQUEST
             )
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class ShowSubscriptionViewSet(ListViewSet):
@@ -179,16 +144,19 @@ class ShowSubscriptionViewSet(ListViewSet):
             recipes_count=Count('recipes')
         )
 
+from rest_framework.permissions import AllowAny
 
 class DownloadShoppingCart(views.APIView):
     """
     Обработка запроса на скачивание списка покупок.
     После обработки корзина очищается.
     """
+    permission_classes = [AllowAny, ]
 
     def get(self, request):
         user = request.user
-        queryset = user.shopping_cart.select_related('recipe').all()
+        queryset = ShoppingCart.objects.all()
+        # queryset = user.shopping_cart.select_related('recipe').all()
         message = get_header_message(queryset)
         total_list = get_total_list(queryset)
 
@@ -198,5 +166,5 @@ class DownloadShoppingCart(views.APIView):
                 for unit, amount in v.items():
                     f.write(f'{k}: {amount} {unit}\n')
 
-        user.shopping_cart.all().delete()
-        return FileResponse(open('total_list.txt', 'rb'), as_attachment=True)
+        # user.shopping_cart.all().delete()
+        return FileResponse(('total_list.txt', 'rb'), as_attachment=True)

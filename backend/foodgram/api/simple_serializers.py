@@ -1,6 +1,7 @@
 import base64
-import re
 import time as t
+import re
+from os import path
 
 from django.conf import settings
 from django.utils.text import slugify
@@ -75,17 +76,16 @@ class Base64toImageFile(serializers.Field):
         slugify_name = slugify(recipe_name, allow_unicode=True)
         to_compile = re.compile(self.pattern)
         parse = to_compile.search(data)
-        f_dir = parse.group('f_dir')
         f_ext = parse.group('f_ext')
         byte_string = parse.group('byte_string')
 
         f_name = f'{hash(t.time())}-{slugify_name}.{f_ext}'
         to_bytes = base64.b64decode(byte_string)
 
-        with open(
-            f'{settings.MEDIA_ROOT}\\recipes\\{f_dir}\\{f_name}',
-            'wb'
-        ) as im:
+        to_save = path.join(settings.MEDIA_ROOT, 'recipes', 'images', f_name)
+        to_return = path.join('recipes', 'images', f_name)
+
+        with open(to_save, 'wb') as im:
             im.write(to_bytes)
 
-        return f'recipes/images/{f_name}'
+        return to_return

@@ -21,7 +21,10 @@ class RecipeFilter(django_filters.FilterSet):
         field_name='tags__slug',
         lookup_expr='iexact'
     )
+    CHOICES = (('1', True), ('0', False))
+    is_favorited = django_filters.ChoiceFilter(choices=CHOICES)
+    is_in_shopping_cart = django_filters.ChoiceFilter(choices=CHOICES)
 
     class Meta:
         model = Recipe
-        fields = ('author', 'tags')
+        fields = ('author', 'tags', 'is_favorited', 'is_in_shopping_cart')

@@ -1,32 +1,3 @@
-from rest_framework.serializers import ValidationError
-
-
-class IsFavOrInShopCart:
-    """
-    Вспомогательный класс для реализации фильтров
-    'is_favorited' и 'is_in_shopping_cart' со встроенной валидацией
-    значения параметра.
-    """
-
-    values = {
-        '0': False,
-        '1': True
-    }
-
-    def __init__(self, value, name):
-        self.name = name
-        if value not in self.values:
-            raise ValidationError(
-                f'Параметр {name} может принимать значения 0 или 1!'
-            )
-        self.value = value
-
-    @property
-    def check(self):
-        """При значении True фильтр будет активен."""
-        return self.values[self.value]
-
-
 def get_header_message(queryset):
     """
     Готовит заголовок из перечня рецептов для списка покупок.

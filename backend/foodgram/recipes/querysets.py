@@ -36,9 +36,5 @@ class RecipeManager(models.Manager):
     def get_queryset(self):
         return RecipeQuerySet(self.model, using=self._db)
 
-    # def get_queryset(self, user=None):
-    #     qs = super(RecipeManager, self).get_queryset()
-    #     return qs.annotated(user)
-
     def annotated(self, user=None):
         return self.get_queryset().annotated(user)

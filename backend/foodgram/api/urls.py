@@ -4,6 +4,7 @@ from rest_framework import routers
 from .views import (AddToFavOrShopCartCommonView, DownloadShoppingCart,
                     IngredientsViewSet, MakeSubscription, RecipesViewSet,
                     ShowSubscriptionViewSet, TagsViewSet)
+from recipes.models import Recipe, RecipeFavorite, ShoppingCart
 
 router = routers.DefaultRouter()
 router.register(r'ingredients', IngredientsViewSet)
@@ -17,12 +18,10 @@ urlpatterns = [
     path('recipes/', include([
 
         path('<int:id>/favorite/', AddToFavOrShopCartCommonView.as_view(),
-             {'primary': {'model': 'RecipeFavorite', 'app': 'recipes'},
-              'secondary': {'model': 'Recipe', 'app': 'recipes'}}),
+             {'primary': RecipeFavorite, 'secondary': Recipe}),
 
         path('<int:id>/shopping_cart/', AddToFavOrShopCartCommonView.as_view(),
-             {'primary': {'model': 'ShoppingCart', 'app': 'recipes'},
-              'secondary': {'model': 'Recipe', 'app': 'recipes'}}),
+             {'primary': ShoppingCart, 'secondary': Recipe}),
 
         path('download_shopping_cart/', DownloadShoppingCart.as_view())
     ])),
