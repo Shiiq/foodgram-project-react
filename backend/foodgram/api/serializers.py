@@ -4,7 +4,6 @@ from rest_framework import serializers
 
 from recipes.models import Ingredient, Recipe, RecipeIngredients, Tag
 from recipes.utils import delete_recipe_image
-from users.models import Subscription
 from .simple_serializers import (Base64toImageFile, IngredientDetailSerializer,
                                  RecipesShortInfoSerializer)
 
@@ -18,9 +17,8 @@ class CustomUsersSerializer(UserSerializer):
 
     def get_is_subscribed(self, obj):
         user = self.context.get('request').user
-        # return user.authors.filter(author=obj)
-        # return obj.subscribers.get(user=user).exists()
-        return Subscription.objects.filter(author=obj, user=user).exists()
+        return (user.is_authenticated
+                and obj.subscribers.filter(user=user).exists())
 
     class Meta:
         model = User

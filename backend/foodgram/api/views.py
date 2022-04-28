@@ -1,12 +1,14 @@
+from io import StringIO
+
 from django.db import IntegrityError
 from django.db.models import Count
-from django.http import FileResponse
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import pagination, status, views, viewsets
 from rest_framework.response import Response
 
-from recipes.models import Ingredient, Recipe, Tag, ShoppingCart
+from recipes.models import Ingredient, Recipe, Tag
 from users.models import Subscription, User
 from .filters import IngredientSearchFilter, RecipeFilter
 from .permissions import RecipePermission
@@ -142,36 +144,28 @@ class ShowSubscriptionViewSet(ListViewSet):
             recipes_count=Count('recipes')
         )
 
-from io import StringIO
-from rest_framework.permissions import AllowAny
+
 class DownloadShoppingCart(views.APIView):
     """
     Обработка запроса на скачивание списка покупок.
     После обработки корзина очищается.
     """
-    permission_classes = [AllowAny, ]
 
     def get(self, request):
         user = request.user
-        queryset = ShoppingCart.objects.all()
-        # queryset = user.shopping_cart.select_related('recipe').all()
+        queryset = user.shopping_cart.select_related('recipe').all()
         message = get_header_message(queryset)
         total_list = get_total_list(queryset)
 
         f = StringIO()
-        f.name = 'shopping-list'
+        f.name = 'shopping-list.txt'
         f.write(f'{message}\n\n')
         for k, v in total_list.items():
             for unit, amount in v.items():
                 f.write(f'{k}: {amount} {unit}\n')
 
-        f.seek(0)
-        return FileResponse(open(f.getvalue(), 'rb+'), as_attachment=True)
-        # with open('total_list.txt', 'w', encoding='utf-8') as f:
-        #     f.write(f'{message}\n\n')
-        #     for k, v in total_list.items():
-        #         for unit, amount in v.items():
-        #             f.write(f'{k}: {amount} {unit}\n')
+        response = HttpResponse(f.getvalue(), content_type='text/plain')
+        response['Content-Disposition'] = f'attachment; filename={f.name}'
+        user.shopping_cart.all().delete()
 
-        # user.shopping_cart.all().delete()
-        # return FileResponse(, as_attachment=True)
+        return response

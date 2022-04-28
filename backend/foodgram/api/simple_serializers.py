@@ -1,6 +1,6 @@
 import base64
-import time as t
 import re
+import time as t
 from os import path
 
 from django.conf import settings

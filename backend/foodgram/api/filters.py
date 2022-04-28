@@ -13,14 +13,8 @@ class IngredientSearchFilter(SearchFilter):
 class RecipeFilter(django_filters.FilterSet):
     """Кастомный фильтр для вьюсета 'Recipe'."""
 
-    author = django_filters.CharFilter(
-        field_name='author__id',
-        lookup_expr='iexact'
-    )
-    tags = django_filters.CharFilter(
-        field_name='tags__slug',
-        lookup_expr='iexact'
-    )
+    author = django_filters.CharFilter(field_name='author__id')
+    tags = django_filters.CharFilter(field_name='tags__slug')
     CHOICES = (('1', True), ('0', False))
     is_favorited = django_filters.ChoiceFilter(choices=CHOICES)
     is_in_shopping_cart = django_filters.ChoiceFilter(choices=CHOICES)
