@@ -148,7 +148,7 @@ class RecipeIngredients(models.Model):
 
     def __str__(self):
         recipe = self.recipe
-        ingredient = self.ingredient
+        ingredient = self.ingredient.name
         amount = self.amount
         return f'{recipe}: {ingredient}, {amount}'
 

@@ -53,6 +53,7 @@ class RecipesSerializer(serializers.ModelSerializer):
     author = CustomUsersSerializer(read_only=True)
     is_favorited = serializers.BooleanField(read_only=True)
     is_in_shopping_cart = serializers.BooleanField(read_only=True)
+    # image = Base64toImageFile()
 
     class Meta:
         model = Recipe
