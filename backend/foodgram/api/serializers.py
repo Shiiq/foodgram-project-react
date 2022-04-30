@@ -1,11 +1,17 @@
+import base64
+import re
+import time as t
+import os
+
+from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.utils.text import slugify
 from djoser.serializers import UserCreateSerializer, UserSerializer
 from rest_framework import serializers
 
 from recipes.models import Ingredient, Recipe, RecipeIngredients, Tag
 from recipes.utils import delete_recipe_image
-from .simple_serializers import (Base64toImageFile, IngredientDetailSerializer,
-                                 RecipesShortInfoSerializer)
+from .simple_serializers import IngredientsToWrite, IngredientDetailSerializer, RecipesShortInfoSerializer
 
 User = get_user_model()
 
@@ -43,6 +49,48 @@ class CustomUsersCreateSerializer(UserCreateSerializer):
         )
 
 
+class Base64toImageFile(serializers.Field):
+    """
+    При записи в поле image поступает байтовая строка, которая декодируется
+    в изображение и сохраняется в MEDIA_ROOT
+    Обработка данных из поля image с последующим
+    сохранением изображения в БД.
+    """
+
+    pattern = (
+        r'data:(?P<f_dir>\w+)\/(?P<f_ext>\w+);base64,(?P<byte_string>.+)'
+    )
+
+    def to_representation(self, value):
+        return value.url
+
+    def to_internal_value(self, data):
+        """
+        Название изображения формируется
+        из хеша временной метки и слага названия рецепта.
+        Если при редактировании рецепта заменяется изображение,
+        то старое изображение удаляется.
+        """
+
+        recipe_name = self.context['request'].data['name']
+        slugify_name = slugify(recipe_name, allow_unicode=True)
+        to_compile = re.compile(self.pattern)
+        parse = to_compile.search(data)
+        f_ext = parse.group('f_ext')
+        byte_string = parse.group('byte_string')
+        f_name = f'{hash(t.time())}.{f_ext}'
+        # f_name = f'{hash(t.time())}-{slugify_name}.{f_ext}'
+        to_bytes = base64.b64decode(byte_string)
+
+        to_save = os.path.join(settings.MEDIA_ROOT, 'recipes', 'images', f_name)
+        to_return = os.path.join('recipes', 'images', f_name)
+
+        with open(to_save, 'wb') as im:
+            im.write(to_bytes)
+
+        return to_return
+
+
 class RecipesSerializer(serializers.ModelSerializer):
     """Выводит информацию о рецептах."""
 
@@ -53,7 +101,7 @@ class RecipesSerializer(serializers.ModelSerializer):
     author = CustomUsersSerializer(read_only=True)
     is_favorited = serializers.BooleanField(read_only=True)
     is_in_shopping_cart = serializers.BooleanField(read_only=True)
-    # image = Base64toImageFile()
+    image = Base64toImageFile()
 
     class Meta:
         model = Recipe
@@ -66,18 +114,7 @@ class RecipesSerializer(serializers.ModelSerializer):
         depth = 1
 
 
-class IngredientsToWrite(serializers.ModelSerializer):
-    """
-    Используется для записи информации
-    об ингредиентах при создании рецепта.
-    """
 
-    id = serializers.PrimaryKeyRelatedField(queryset=Ingredient.objects.all())
-    amount = serializers.FloatField(required=True)
-
-    class Meta:
-        model = RecipeIngredients
-        fields = ('id', 'amount')
 
 
 class RecipesCreateSerializer(serializers.ModelSerializer):

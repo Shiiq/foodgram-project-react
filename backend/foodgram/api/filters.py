@@ -15,7 +15,9 @@ class RecipeFilter(django_filters.FilterSet):
 
     author = django_filters.CharFilter(field_name='author__id')
     tags = django_filters.CharFilter(field_name='tags__slug')
+
     CHOICES = (('1', True), ('0', False))
+
     is_favorited = django_filters.ChoiceFilter(choices=CHOICES)
     is_in_shopping_cart = django_filters.ChoiceFilter(choices=CHOICES)
 

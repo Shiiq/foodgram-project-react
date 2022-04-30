@@ -148,6 +148,8 @@ class ShowSubscriptionViewSet(ListViewSet):
 class DownloadShoppingCart(views.APIView):
     """
     Обработка запроса на скачивание списка покупок.
+    Список формируется по ингредиентам
+    в дополнительном методе "get_total_list".
     После обработки корзина очищается.
     """
 
