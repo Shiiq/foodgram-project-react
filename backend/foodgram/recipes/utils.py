@@ -21,6 +21,5 @@ def get_upload_path(instance, filename):
 
     slugify_name = slugify(instance.name, allow_unicode=True)
     f_ext = os.path.splitext(filename)[1]
-    f_name = f'{hash(t.time())}{f_ext}'
-    # f_name = f'{hash(t.time())}-{slugify_name}{f_ext}'
+    f_name = f'{hash(t.time())}-{slugify_name}{f_ext}'
     return os.path.join('recipes', 'images', f'{f_name}')

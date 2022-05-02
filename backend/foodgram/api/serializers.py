@@ -1,17 +1,19 @@
 import base64
 import re
 import time as t
-import os
 
-from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.core.files.base import ContentFile
 from django.utils.text import slugify
 from djoser.serializers import UserCreateSerializer, UserSerializer
 from rest_framework import serializers
 
-from recipes.models import Ingredient, Recipe, RecipeIngredients, Tag
+from recipes.models import Recipe, RecipeIngredients, Tag
 from recipes.utils import delete_recipe_image
-from .simple_serializers import IngredientsToWrite, IngredientDetailSerializer, RecipesShortInfoSerializer
+
+from .simple_serializers import (IngredientDetailSerializer,
+                                 IngredientsToWrite,
+                                 RecipesShortInfoSerializer)
 
 User = get_user_model()
 
@@ -49,12 +51,12 @@ class CustomUsersCreateSerializer(UserCreateSerializer):
         )
 
 
-class Base64toImageFile(serializers.Field):
+class Base64toImageFile(serializers.ImageField):
     """
-    При записи в поле image поступает байтовая строка, которая декодируется
-    в изображение и сохраняется в MEDIA_ROOT
-    Обработка данных из поля image с последующим
-    сохранением изображения в БД.
+    Обработка данных из поля image с последующим сохранением изображения в БД.
+    При записи в поле поступает байтовая строка,
+    которая декодируется в изображение и сохраняется.
+    При просмотре возвращается url изображения.
     """
 
     pattern = (
@@ -78,17 +80,11 @@ class Base64toImageFile(serializers.Field):
         parse = to_compile.search(data)
         f_ext = parse.group('f_ext')
         byte_string = parse.group('byte_string')
-        f_name = f'{hash(t.time())}.{f_ext}'
-        # f_name = f'{hash(t.time())}-{slugify_name}.{f_ext}'
-        to_bytes = base64.b64decode(byte_string)
+        f_name = f'{hash(t.time())}-{slugify_name}.{f_ext}'
+        decoded_byte_string = base64.b64decode(byte_string)
 
-        to_save = os.path.join(settings.MEDIA_ROOT, 'recipes', 'images', f_name)
-        to_return = os.path.join('recipes', 'images', f_name)
-
-        with open(to_save, 'wb') as im:
-            im.write(to_bytes)
-
-        return to_return
+        image = ContentFile(decoded_byte_string, name=f_name)
+        return super(Base64toImageFile, self).to_internal_value(image)
 
 
 class RecipesSerializer(serializers.ModelSerializer):
@@ -112,9 +108,6 @@ class RecipesSerializer(serializers.ModelSerializer):
             'is_favorited', 'is_in_shopping_cart'
         )
         depth = 1
-
-
-
 
 
 class RecipesCreateSerializer(serializers.ModelSerializer):

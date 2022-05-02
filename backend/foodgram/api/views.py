@@ -10,6 +10,7 @@ from rest_framework.response import Response
 
 from recipes.models import Ingredient, Recipe, Tag
 from users.models import Subscription, User
+
 from .filters import IngredientSearchFilter, RecipeFilter
 from .permissions import RecipePermission
 from .serializers import (RecipesCreateSerializer, RecipesSerializer,
@@ -45,6 +46,7 @@ class RecipesViewSet(viewsets.ModelViewSet):
     pagination_class = pagination.LimitOffsetPagination
     filter_backends = (DjangoFilterBackend, )
     filterset_class = RecipeFilter
+    http_method_names = ['get', 'post', 'patch', 'delete']
 
     def get_queryset(self):
         user = self.request.user
@@ -148,9 +150,8 @@ class ShowSubscriptionViewSet(ListViewSet):
 class DownloadShoppingCart(views.APIView):
     """
     Обработка запроса на скачивание списка покупок.
-    Список формируется по ингредиентам
-    в дополнительном методе "get_total_list".
-    После обработки корзина очищается.
+    Список группируется по ингредиентам в вызываемом методе "get_total_list".
+    После обработки запроса и выдачи файла корзина очищается.
     """
 
     def get(self, request):
