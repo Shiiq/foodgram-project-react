@@ -4,14 +4,6 @@ import time as t
 from django.utils.text import slugify
 
 
-def delete_recipe_image(path):
-    """
-    Удаляет старое изображение рецепта при записи через сериалайзер.
-    """
-
-    os.remove(path)
-
-
 def get_upload_path(instance, filename):
     """
     Формирует путь хранения изображений при добавлении через админку.

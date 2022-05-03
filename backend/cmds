@@ -1,0 +1,17 @@
+docker-compose up -d --build
+
+docker-compose exec web python manage.py makemigrations users
+docker-compose exec web python manage.py migrate users
+docker-compose exec web python manage.py makemigrations recipes
+docker-compose exec web python manage.py migrate recipes
+docker-compose exec web python manage.py migrate
+
+docker-compose exec web python manage.py importcsv tags.csv Tag
+docker-compose exec web python manage.py importcsv ingredients.csv Ingredient
+
+docker-compose exec web python manage.py collectstatic --no-input
+
+docker-compose exec web python manage.py createsuperuser
+
+
+data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABAgMAAABieywaAAAACVBMVEUAAAD///9fX1/S0ecCAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAACklEQVQImWNoAAAAggCByxOyYQAAAABJRU5ErkJggg==

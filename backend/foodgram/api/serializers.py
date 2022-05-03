@@ -9,7 +9,6 @@ from djoser.serializers import UserCreateSerializer, UserSerializer
 from rest_framework import serializers
 
 from recipes.models import Recipe, RecipeIngredients, Tag
-from recipes.utils import delete_recipe_image
 
 from .simple_serializers import (IngredientDetailSerializer,
                                  IngredientsToWrite,
@@ -147,9 +146,8 @@ class RecipesCreateSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
         tags = validated_data.pop('tags')
         ingredients = validated_data.pop('ingredients')
+        instance.image.delete()
         super().update(instance=instance, validated_data=validated_data)
-
-        delete_recipe_image(instance.image.path)
 
         instance.tags.set(tags)
 
