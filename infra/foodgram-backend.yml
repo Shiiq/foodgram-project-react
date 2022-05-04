@@ -52,10 +52,10 @@ jobs:
       - name: executing remote ssh commands to deploy
         uses: appleboy/ssh-action@master
         with:
-          host: ${{ secrets.SERV_HOST1 }}
-          username: ${{ secrets.SERV_USER1 }}
-          key: ${{ secrets.SERV_SSH1 }}
-          passphrase: ${{ secrets.SERV_PASSPHRASE1 }}
+          host: ${{ secrets.SERV_HOST }}
+          username: ${{ secrets.SERV_USER }}
+          key: ${{ secrets.SERV_SSH }}
+          passphrase: ${{ secrets.SERV_PASSPHRASE }}
           script: |
             sudo docker-compose stop
             sudo docker-compose rm web
