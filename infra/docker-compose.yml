@@ -18,9 +18,7 @@ services:
       - .env
 
   web:
-    build:
-      context: ../backend/foodgram
-      dockerfile: Dockerfile
+    image: peterkiriakov/foodgram:latest
     restart: always
     volumes:
       - django_static_value:/app/django_static/

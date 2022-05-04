@@ -15,3 +15,10 @@ docker-compose exec web python manage.py createsuperuser
 
 
 data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABAgMAAABieywaAAAACVBMVEUAAAD///9fX1/S0ecCAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAACklEQVQImWNoAAAAggCByxOyYQAAAABJRU5ErkJggg==
+
+ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDzPVdt/P4v/xncl87g7BAkgMfHI764L0t7gxzxNuoWaNS0U3DLW0b+de/WBFys4kMIJrdcMNV6YQzvTkUQs0yRmWb2EfSmsQ82QrwZjs/tMtTOAKzL9mO7pfMUMe9bSSXxgXgs4xDcYjHE3eJ9RK3W9a4+IijfsfOH3SCZacP8sX0PTxqr7cSrUOgfmcXy/QFsMO1SEMVc68Qbfk6z+Z3RDZyolJDlMU+y3cytjdNoUsT4h5sAk/manN5IF/v4T3QcjbLJwvmwHuxQQrhhOCAS5M5QJ8D3He0BT5/trbqQGswyysAyjRgGLoK6+jhKAwdWEA0GLHsXTWhYQe/wOZcw0hx/VgwojTfsSkbs/iSdS7OZl921EVpZIRsdiDhTxEtA/Q2oRaMLyeKEsqk2K8pjbWJWUXE3ztbXEXIKzwG1O0lKrE5laM3/yXO7x4dl18zd6BWgJ+mP9QYMwUa36Vws3MQWqj1ZLXQEkN0HSXCu19v7+SoOUQdwWbc/iVv3Ql8= shiiq@DESKTOP-5PCPS2M
+
+    build:
+      context: ../backend/foodgram
+      dockerfile: Dockerfile
+    restart: always
