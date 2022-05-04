@@ -2,7 +2,6 @@ from django.urls import include, path
 from rest_framework import routers
 
 from recipes.models import Recipe, RecipeFavorite, ShoppingCart
-
 from .views import (AddToFavOrShopCartCommonView, DownloadShoppingCart,
                     IngredientsViewSet, MakeSubscription, RecipesViewSet,
                     ShowSubscriptionViewSet, TagsViewSet)

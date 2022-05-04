@@ -9,7 +9,6 @@ from djoser.serializers import UserCreateSerializer, UserSerializer
 from rest_framework import serializers
 
 from recipes.models import Recipe, RecipeIngredients, Tag
-
 from .simple_serializers import (IngredientDetailSerializer,
                                  IngredientsToWrite,
                                  RecipesShortInfoSerializer)

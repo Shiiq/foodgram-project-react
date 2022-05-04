@@ -1,6 +1,5 @@
 from django.db import models
 from django.db.models import BooleanField, Exists, OuterRef, Q, Value
-
 from users.models import User
 
 
