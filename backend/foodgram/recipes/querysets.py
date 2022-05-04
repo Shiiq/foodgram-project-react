@@ -8,20 +8,24 @@ class RecipeQuerySet(models.QuerySet):
     """Кастомный queryset для модели Recipe."""
 
     def annotated(self, user):
-        if not isinstance(user, User) or user is None or not user.is_authenticated:
+        if (not isinstance(user, User)
+                or user is None
+                or not user.is_authenticated):
             return self.annotate(
                 is_favorited=Value(False, output_field=BooleanField()),
                 is_in_shopping_cart=Value(False, output_field=BooleanField())
             )
         return self.annotate(
             is_favorited=Exists(
-                self.filter(Q(recipe_favorite__recipe=OuterRef('pk')) &
-                            Q(recipe_favorite__user=user))
-            ),
+                self.filter(
+                    Q(recipe_favorite__recipe=OuterRef('pk'))
+                    & Q(recipe_favorite__user=user)
+                )),
             is_in_shopping_cart=Exists(
-                self.filter(Q(in_shopping_cart__recipe=OuterRef('pk')) &
-                            Q(in_shopping_cart__user=user))
-            )
+                self.filter(
+                    Q(in_shopping_cart__recipe=OuterRef('pk'))
+                    & Q(in_shopping_cart__user=user)
+                ))
         )
 
 

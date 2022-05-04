@@ -135,10 +135,10 @@ class RecipesCreateSerializer(serializers.ModelSerializer):
         recipe.tags.set(tags)
 
         recipe_ingredients = [RecipeIngredients(
-                recipe=recipe,
-                ingredient=ingredient['id'],
-                amount=ingredient['amount']
-            ) for ingredient in ingredients]
+            recipe=recipe,
+            ingredient=ingredient['id'],
+            amount=ingredient['amount']
+        ) for ingredient in ingredients]
         RecipeIngredients.objects.bulk_create(recipe_ingredients)
 
         return recipe
@@ -156,10 +156,10 @@ class RecipesCreateSerializer(serializers.ModelSerializer):
 
         instance.recipe_ingredients.all().delete()
         recipe_ingredients = [RecipeIngredients(
-                recipe=instance,
-                ingredient=ingredient['id'],
-                amount=ingredient['amount']
-            ) for ingredient in ingredients]
+            recipe=instance,
+            ingredient=ingredient['id'],
+            amount=ingredient['amount']
+        ) for ingredient in ingredients]
         RecipeIngredients.objects.bulk_create(recipe_ingredients)
 
         return instance
