@@ -7,16 +7,14 @@ from .models import (Ingredient, Recipe, RecipeFavorite, RecipeIngredients,
 
 class IngredientAdmin(admin.ModelAdmin):
     list_display = (
-        'pk', 'name',
-        'measurement_unit'
+        'pk', 'name', 'measurement_unit'
     )
     search_fields = ('name', )
 
 
 class TagAdmin(admin.ModelAdmin):
     list_display = (
-        'pk', 'name',
-        'slug', 'color'
+        'pk', 'name', 'slug', 'color'
     )
     search_fields = ('name', )
     prepopulated_fields = {'slug': ('name',)}
@@ -24,13 +22,15 @@ class TagAdmin(admin.ModelAdmin):
 
 class RecipeAdmin(admin.ModelAdmin):
     list_display = (
-        'pk', 'name', 'author',
-        'text', 'cooking_time',
-        'ingredient_list', 'tag_list',
-        'image_preview', 'image'
+        'pk', 'name', 'author', 'ingredient_list',
+        'tag_list', 'image_preview', 'is_favorited_count'
     )
-    search_fields = ('name', 'author')
+    list_filter = ('author', 'name', 'tags')
+    search_fields = ('author', 'name')
     readonly_fields = ('image_preview', )
+
+    def is_favorited_count(self, obj):
+        return obj.recipe_favorite.count()
 
     def ingredient_list(self, obj):
         return (', '.join([
@@ -51,6 +51,7 @@ class RecipeAdmin(admin.ModelAdmin):
             f'width="250px" '
         )
 
+    is_favorited_count.short_description = 'Добавили в избранное раз'
     ingredient_list.short_description = 'Ингредиенты'
     tag_list.short_description = 'Теги'
     image_preview.short_description = 'Картинка'

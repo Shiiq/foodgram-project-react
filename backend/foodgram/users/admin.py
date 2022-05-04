@@ -3,5 +3,10 @@ from django.contrib.auth.admin import UserAdmin
 
 from .models import Subscription, User
 
-admin.site.register(User, UserAdmin)
+
+class CustomUserAdmin(UserAdmin):
+    list_filter = ('username', 'email')
+
+
+admin.site.register(User, CustomUserAdmin)
 admin.site.register(Subscription)

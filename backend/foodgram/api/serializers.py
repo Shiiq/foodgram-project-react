@@ -146,7 +146,10 @@ class RecipesCreateSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
         tags = validated_data.pop('tags')
         ingredients = validated_data.pop('ingredients')
-        instance.image.delete()
+
+        if validated_data.get('image') is not None:
+            instance.image.delete()
+
         super().update(instance=instance, validated_data=validated_data)
 
         instance.tags.set(tags)
