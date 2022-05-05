@@ -6,11 +6,11 @@ load_dotenv()
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-SECRET_KEY = os.getenv('SECRET_KEY', default='kdxjv02ivo1-fk#1*')
+SECRET_KEY = os.getenv('SECRET_KEY', "kdxjv02ivo1-fk#1*")
 
-DEBUG = True
+DEBUG = False
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', "web 0.0.0.0 127.0.0.1 localhost").split()
 
 AUTH_USER_MODEL = 'users.User'
 
@@ -66,12 +66,12 @@ DATABASES = {
     #     'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
     # },
     'default': {
-        'ENGINE': os.getenv('DB_ENGINE', default='django.db.backends.postgresql'),
-        'NAME': os.getenv('POSTGRES_DB', default='foodgram'),
-        'USER': os.getenv('POSTGRES_USER', default='default_user'),
-        'PASSWORD': os.getenv('POSTGRES_PASSWORD', 'default_password'),
-        'HOST': os.getenv('DB_HOST', 'db'),
-        'PORT': os.getenv('DB_PORT', '5432'),
+        'ENGINE': os.getenv('DB_ENGINE', default="django.db.backends.postgresql"),
+        'NAME': os.getenv('POSTGRES_DB', default="foodgram"),
+        'USER': os.getenv('POSTGRES_USER', default="default_user"),
+        'PASSWORD': os.getenv('POSTGRES_PASSWORD', "default_password"),
+        'HOST': os.getenv('DB_HOST', default="db"),
+        'PORT': os.getenv('DB_PORT', default="5432"),
     }
 }
 

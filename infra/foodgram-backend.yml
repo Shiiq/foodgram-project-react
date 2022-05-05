@@ -60,6 +60,7 @@ jobs:
             cd foodgram-project-react/infra
             sudo docker-compose stop
             sudo docker-compose rm web
+            rm .env
             touch .env
             echo ALLOWED_HOSTS=${{ secrets.ALLOWED_HOSTS }} >> .env
             echo DB_ENGINE=${{ secrets.DB_ENGINE }} >> .env
