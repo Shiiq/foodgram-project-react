@@ -18,9 +18,15 @@ class RecipeFilter(django_filters.FilterSet):
 
     CHOICES = (('1', True), ('0', False))
 
-    is_favorited = django_filters.ChoiceFilter(choices=CHOICES)
-    is_in_shopping_cart = django_filters.ChoiceFilter(choices=CHOICES)
+    is_favorited = django_filters.ChoiceFilter(
+        choices=CHOICES,
+        field_name='is_favorited'
+    )
+    is_in_shopping_cart = django_filters.ChoiceFilter(
+        choices=CHOICES,
+        field_name='is_in_shopping_cart'
+    )
 
     class Meta:
         model = Recipe
-        fields = ('author', 'tags', 'is_favorited', 'is_in_shopping_cart')
+        fields = ('author', 'is_favorited', 'is_in_shopping_cart')

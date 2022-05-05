@@ -5,12 +5,14 @@ from django.db.models import Count
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import pagination, status, views, viewsets
+from rest_framework import status, views, viewsets
 from rest_framework.response import Response
+from djoser.views import UserViewSet
 
 from users.models import Subscription, User
 from recipes.models import Ingredient, Recipe, Tag
 from .filters import IngredientSearchFilter, RecipeFilter
+from .pagination import CustomPagination
 from .permissions import RecipePermission
 from .serializers import (RecipesCreateSerializer, RecipesSerializer,
                           SubscribeSerializer)
@@ -18,6 +20,10 @@ from .simple_serializers import (IngredientsSerializer,
                                  RecipesShortInfoSerializer, TagsSerializer)
 from .utils import get_header_message, get_total_list
 from .viewsets import ListViewSet, RetrieveListModelViewSet
+
+
+class CustomUserViewSet(UserViewSet):
+    pagination_class = CustomPagination
 
 
 class IngredientsViewSet(RetrieveListModelViewSet):
@@ -42,13 +48,14 @@ class RecipesViewSet(viewsets.ModelViewSet):
     queryset = Recipe.objects.annotated()
     serializer_class = RecipesSerializer
     permission_classes = (RecipePermission, )
-    pagination_class = pagination.LimitOffsetPagination
+    pagination_class = CustomPagination
     filter_backends = (DjangoFilterBackend, )
     filterset_class = RecipeFilter
     http_method_names = ['get', 'post', 'patch', 'delete']
 
     def get_queryset(self):
         user = self.request.user
+        tags = self.request.query_params.getlist('tags')
         return self.queryset.annotated(user).all()
 
     def get_serializer_class(self):
@@ -136,6 +143,7 @@ class ShowSubscriptionViewSet(ListViewSet):
 
     queryset = User.objects.all()
     serializer_class = SubscribeSerializer
+    pagination_class = CustomPagination
 
     def get_queryset(self):
         user = self.request.user
