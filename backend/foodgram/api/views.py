@@ -9,8 +9,8 @@ from rest_framework import status, views, viewsets
 from rest_framework.response import Response
 from djoser.views import UserViewSet
 
-from users.models import Subscription, User
 from recipes.models import Ingredient, Recipe, Tag
+from users.models import Subscription, User
 from .filters import IngredientSearchFilter, RecipeFilter
 from .pagination import CustomPagination
 from .permissions import RecipePermission
