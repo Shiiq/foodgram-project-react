@@ -45,7 +45,7 @@ class TagsViewSet(RetrieveListModelViewSet):
 class RecipesViewSet(viewsets.ModelViewSet):
     """Обработка запросов к рецептам."""
 
-    queryset = Recipe.objects.annotated()
+    queryset = Recipe.objects.annotated().prefetch_related('tags')
     serializer_class = RecipesSerializer
     permission_classes = (RecipePermission, )
     pagination_class = CustomPagination
@@ -56,6 +56,8 @@ class RecipesViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         user = self.request.user
         tags = self.request.query_params.getlist('tags')
+        if tags:
+            return self.queryset.annotated(user).filter(tags__slug__in=tags)
         return self.queryset.annotated(user).all()
 
     def get_serializer_class(self):

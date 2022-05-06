@@ -14,7 +14,6 @@ class RecipeFilter(django_filters.FilterSet):
     """Кастомный фильтр для вьюсета 'Recipe'."""
 
     author = django_filters.CharFilter(field_name='author__id')
-    tags = django_filters.CharFilter(field_name='tags__slug')
 
     CHOICES = (('1', True), ('0', False))
 
