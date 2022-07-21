@@ -1,4 +1,4 @@
-##foodgram-project
+## foodgram-project
 
 ![main](https://github.com/Shiiq/foodgram-project-react/actions/workflows/foodgram-backend.yml/badge.svg)  
 
@@ -9,7 +9,7 @@
 Сайт доступен по адресу: ~~51.250.99.184~~ **(на данный момент неактивен)**  
 Для доступа в админ-зону используйте логин _main@main.ru_ и пароль _123_.  
 
-####Как запустить проект:  
+#### Как запустить проект:  
 скачать репозиторий  
   ```
   git clone https://github.com/Shiiq/foodgram-project-react.git
@@ -61,13 +61,13 @@
   docker-compose exec web python manage.py importcsv tags.csv Tag
   docker-compose exec web python manage.py importcsv ingredients.csv Ingredient
   ```
-  5. Для дальнейшей работы с сайтом на главной странице будет предложено зарегистрироваться.  
+  4. Для дальнейшей работы с сайтом на главной странице будет предложено зарегистрироваться.  
   После чего появится возможность публиковать свои рецепты, подписываться на других авторов, добавлять в избранное и создавать списки покупок.
-  6. Если необходимо, то сервер можно остановить;
+  5. Если необходимо, то сервер можно остановить;
   ```
   docker-compose stop web
   ```
-  5. Либо перезагрузить;
+  6. Либо перезагрузить;
   ```
   docker-compose restart web
   ```
