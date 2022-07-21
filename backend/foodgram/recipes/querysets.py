@@ -4,9 +4,15 @@ from users.models import User
 
 
 class RecipeQuerySet(models.QuerySet):
-    """Кастомный queryset для модели Recipe."""
+    """
+    Кастомный queryset для модели Recipe.
+    Добавлены поля 'is_favorited' и 'is_in_shopping_cart'.
+    """
 
     def annotated(self, user):
+        """Ожидает на вход экземпляр модели 'user'."""
+
+        # Проверяем все возможные ситуации с параметром 'user'.
         if (not isinstance(user, User)
                 or user is None
                 or not user.is_authenticated):
@@ -17,11 +23,13 @@ class RecipeQuerySet(models.QuerySet):
         return self.annotate(
             is_favorited=Exists(
                 self.filter(
+                    # Существует ли связка рецепт-любимый рецепт-юзер.
                     Q(recipe_favorite__recipe=OuterRef('pk'))
                     & Q(recipe_favorite__user=user)
                 )),
             is_in_shopping_cart=Exists(
                 self.filter(
+                    # Существует ли связка рецепт-корзина-юзер.
                     Q(in_shopping_cart__recipe=OuterRef('pk'))
                     & Q(in_shopping_cart__user=user)
                 ))
@@ -32,8 +40,8 @@ class RecipeManager(models.Manager):
     """
     Кастомный менеджер для queryset'а Recipe.
     Метод annotated() принимает в качестве аргумента экземпляр юзера,
-    либо подставляет значение None при его отсутствии.
-    Дальнейшая проверка юзера проводится в самом RecipeQueryset.
+    либо None по умолчанию.
+    Дальнейшая проверка юзера реализована в RecipeQueryset.
     """
 
     def get_queryset(self):

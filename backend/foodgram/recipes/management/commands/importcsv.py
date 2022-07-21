@@ -7,8 +7,10 @@ from django.core.management.base import BaseCommand
 
 class Command(BaseCommand):
     """
-    Импорт данных в БД
-    manage.py importcsv path/to/file.csv model_name
+    Импорт данных в БД из csv файла.
+    Для корректного импорта первая строка csv файла
+    должна содержать все поля импортируемой модели.
+    Пример команды - manage.py importcsv path/to/file.csv model_name
     """
 
     help = 'Imports data from csv-file'
@@ -27,7 +29,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         file_path = options['file_path']
-        model_cl = apps.get_model('recipes', model_name=options["model"])
+        model_cl = apps.get_model('recipes', model_name=options['model'])
         t1 = time.time()
 
         with open(file_path, "r", encoding="utf-8") as csv_file:

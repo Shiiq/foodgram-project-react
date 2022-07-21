@@ -4,7 +4,10 @@ from django.db.models import F, Q
 
 
 class User(AbstractUser):
-    """Пользовательская модель юзера с переопределенными полями."""
+    """
+    Пользовательская модель юзера с переопределенными полями.
+    Для авторизации используется e-mail вместо username.
+    """
 
     email = models.EmailField(
         max_length=254,

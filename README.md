@@ -1,6 +1,6 @@
 # foodgram-project
 ![main](https://github.com/Shiiq/foodgram-project-react/actions/workflows/foodgram-backend.yml/badge.svg)  
-Сайт доступен по адресу: **51.250.99.184** (на данный момент недоступен)  
+Сайт доступен по адресу: **51.250.99.184** (на данный момент неактивен)  
 Для доступа в админ-зону используйте логин _main@main.ru_ и пароль _123_.  
 
 Как запустить проект:

@@ -11,7 +11,11 @@ class IngredientSearchFilter(SearchFilter):
 
 
 class RecipeFilter(django_filters.FilterSet):
-    """Кастомный фильтр для вьюсета 'Recipe'."""
+    """
+    Кастомный фильтр для вьюсета 'Recipe'.
+    Параметры 'is_favorited' и 'is_in_shopping_cart' для удобства
+    будут задаваться в строке запроса 1 и 0 вместо True/False.
+    """
 
     author = django_filters.CharFilter(field_name='author__id')
 

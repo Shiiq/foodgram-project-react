@@ -30,19 +30,27 @@ class RecipeAdmin(admin.ModelAdmin):
     readonly_fields = ('image_preview', )
 
     def is_favorited_count(self, obj):
+        """Сколько раз добавлен в избранное."""
+
         return obj.recipe_favorite.count()
 
     def ingredient_list(self, obj):
+        """Показ ингредиентов в рецепте."""
+
         return (', '.join([
             ingredient.name for ingredient in obj.ingredients.all()
         ]))
 
     def tag_list(self, obj):
+        """Показ тегов рецепта."""
+
         return (', '.join([
             '#' + tag.name for tag in obj.tags.all()
         ]))
 
     def image_preview(self, obj):
+        """Превью картинки рецепта."""
+
         if not obj.image:
             return ''
         return mark_safe(

@@ -22,6 +22,11 @@ class CustomUsersSerializer(UserSerializer):
     is_subscribed = serializers.SerializerMethodField()
 
     def get_is_subscribed(self, obj):
+        """
+        Добавляет поле с результатом проверки,
+        подписан ли текущий юзер на просматриваемого автора.
+        """
+
         user = self.context.get('request').user
         return (user.is_authenticated
                 and obj.subscribers.filter(user=user).exists())
@@ -36,7 +41,10 @@ class CustomUsersSerializer(UserSerializer):
 
 
 class CustomUsersCreateSerializer(UserCreateSerializer):
-    """Для регистрации пользователя."""
+    """
+    Для регистрации пользователя.
+    Добавлены обязательные поля 'first_name' и 'last_name'.
+    """
 
     first_name = serializers.CharField(required=True)
     last_name = serializers.CharField(required=True)
@@ -52,9 +60,8 @@ class CustomUsersCreateSerializer(UserCreateSerializer):
 class Base64toImageFile(serializers.ImageField):
     """
     Обработка данных из поля image с последующим сохранением изображения в БД.
-    При записи в поле поступает байтовая строка,
-    которая декодируется в изображение и сохраняется.
-    При просмотре возвращается url изображения.
+    При записи в поле поступает байтовая строка, которая декодируется в
+    изображение и сохраняется. При просмотре возвращается url изображения.
     """
 
     pattern = (
@@ -66,10 +73,9 @@ class Base64toImageFile(serializers.ImageField):
 
     def to_internal_value(self, data):
         """
-        Название изображения формируется
-        из хеша временной метки и слага названия рецепта.
-        Если при редактировании рецепта заменяется изображение,
-        то старое изображение удаляется.
+        Имя изображения формируется из хеша временной метки и слага
+        названия рецепта - чтобы исключить перезапись изображений
+        рецептов с одинаковыми названиями.
         """
 
         recipe_name = self.context['request'].data['name']
@@ -153,7 +159,10 @@ class RecipesCreateSerializer(serializers.ModelSerializer):
 
         instance.tags.set(tags)
 
+        # Сначала удаляем все старые связки рецепт-ингредиент-количество.
         instance.recipe_ingredients.all().delete()
+
+        # Перезаписываем заново с новыми данными.
         recipe_ingredients = [RecipeIngredients(
             recipe=instance,
             ingredient=ingredient['id'],
@@ -184,8 +193,11 @@ class SubscribeSerializer(CustomUsersSerializer):
         recipes = obj.recipes.all()
 
         if recipes_limit is None:
+            # Если параметр 'limit' отсутствует в запросе
+            # выводим все рецепты автора.
             return RecipesShortInfoSerializer(recipes, many=True).data
         elif not recipes_limit.isnumeric():
+            # Если параметр 'limit' не цифра, сообщаем об ошибке.
             raise serializers.ValidationError(
                 'Проверьте значение параметра recipes_limit!'
             )
