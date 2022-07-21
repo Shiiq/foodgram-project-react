@@ -1,5 +1,5 @@
 ## foodgram-project  
-![main](https://github.com/Shiiq/foodgram-project-react/actions/workflows/foodgram-backend.yml/badge.svg)  
+![main](https://github.com/Shiiq/foodgram-project-react/actions/workflows/foodgram-backend.yml/badge.svg)
 Учебный проект Я.Практикум. Кулинарный сайт с возможностью публикации своих рецептов, просмотров рецептов других авторов. Реализована аутентификация и авторизация, понравившиеся рецепты можно добавлять в избранное, кидать в корзину покупок, с последующей возможностью скачивания списка покупок по ингредиентам.
 ---
 Сайт доступен по адресу: ~~51.250.99.184~~ **(на данный момент неактивен)**  
