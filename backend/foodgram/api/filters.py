@@ -17,10 +17,9 @@ class RecipeFilter(django_filters.FilterSet):
     будут задаваться в строке запроса 1 и 0 вместо True/False.
     """
 
-    author = django_filters.CharFilter(field_name='author__id')
-
     CHOICES = (('1', True), ('0', False))
 
+    author = django_filters.CharFilter(field_name='author__id')
     is_favorited = django_filters.ChoiceFilter(
         choices=CHOICES,
         field_name='is_favorited'

@@ -1,12 +1,31 @@
-# foodgram-project
+##foodgram-project
 ![main](https://github.com/Shiiq/foodgram-project-react/actions/workflows/foodgram-backend.yml/badge.svg)  
-Сайт доступен по адресу: **51.250.99.184** (на данный момент неактивен)  
+Учебный проект Я.Практикум. Кулинарный сайт с возможностью публикации своих рецептов, просмотров рецептов других авторов. 
+Реализована аутентификация и авторизация, понравившиеся рецепты можно добавлять в избранное, кидать в корзину покупок, 
+с последующей возможностью скачивания списка покупок по ингредиентам.
+---
+Сайт доступен по адресу: ~~51.250.99.184~~ **(на данный момент неактивен)**  
 Для доступа в админ-зону используйте логин _main@main.ru_ и пароль _123_.  
 
-Как запустить проект:
-- скачать репозиторий ```git clone https://github.com/Shiiq/foodgram-project-react.git```
-- скачать образ Docker ```docker pull https://hub.docker.com/repository/docker/peterkiriakov/foodgram```
-- в директории проекта, в папке **infra** создать файл _.env_ и заполнить по образцу:
+####Как запустить проект:  
+скачать репозиторий  
+  ```
+  git clone https://github.com/Shiiq/foodgram-project-react.git
+  ```  
+перейти в папку с проектом  
+  ```
+  cd foodgram-project-react
+  ```   
+установить и активировать виртуальное окружение  
+  ```
+  python -m venv venv
+  source venv/Scripts/activate
+  ```  
+установить зависимости из файла requirements.txt  
+  ```
+  pip install -r path/to/requirements.txt
+  ```
+в директории проекта, в папке **infra** создать файл _.env_ и заполнить по образцу:
   ```
   ALLOWED_HOSTS="['*']"
   DB_ENGINE=django.db.backends.postgresql
@@ -17,8 +36,12 @@
   DB_PORT=1234
   SECRET_KEY='la926#41*92@as)1_d0'
   ```
-- собрать и запустить контейнеры командой ```docker-compose up -d --build```
-- после сборки и запуска контейнеров необходимо выполнить последовательно команды:
+для локального запуска проекта необходимо в файле **nginx.conf** поменять значение параметра _server_name_ на _localhost_  
+приступаем к сборке и запуску контейнеров
+  ```
+  docker-compose up -d --build
+  ```
+после сборки и запуска контейнеров необходимо выполнить последовательно команды:
   1. Запустить миграции;
   ```
   docker-compose exec web python manage.py makemigrations users
@@ -47,9 +70,9 @@
   docker-compose restart web
   ```
 - после запуска сервера будут доступны к просмотру:  
-[страница регистрации](http://51.250.99.184/signup)  
-[страница логина](http://51.250.99.184/signin)  
-[главная страница проекта](http://51.250.99.184/recipes)  
-[справка апи проекта и примеры запросов](http://51.250.99.184/api/docs/)
+[страница регистрации](http://localhost/signup)  
+[страница логина](http://localhost/signin)  
+[главная страница проекта](http://localhost/recipes)  
+[справка апи проекта и примеры запросов](http://localhost/api/docs/)
 
 ### Автор: Киряков Петр, 2022
